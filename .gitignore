@@ -1,0 +1,58 @@
+obj/
+build/
+
+.DS_Store
+
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Compiled Dynamic libraries (Windows)
+*.dll
+*.so.*
+
+# Compiled Static libraries (Windows)
+*.lib
+
+# Executables
+*.exe
+*.out
+
+# Build files
+build/
+dist/
+
+# C++-specific
+*.gcov
+*.gcda
+*.gcno
+
+# Visual Studio Code specific files
+.vscode/
+
+# Operating System Files
+Thumbs.db
+.DS_Store
+Icon?
+._*
+*.Spotlight-V100
+*.Trashes
+ehthumbs.db
+Desktop.ini
+
+# macOS Files
+.DS_Store
+.AppleDouble
+.LSOverride
+__MACOSX/
+
+# Linux Files
+lost+found/
+
+# Windows Files
+Desktop.ini
+NTUSER.DAT*
+Thumbs.db
+*.lnk
