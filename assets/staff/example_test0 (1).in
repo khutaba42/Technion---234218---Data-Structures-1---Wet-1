@@ -1,0 +1,200 @@
+add_user_to_group 29076 3836
+add_group 26348
+add_group 5304
+remove_movie 34152
+rate_movie 34212 37408 86
+user_watch 48722 20888
+get_num_views 24991 DRAMA
+add_group 26143
+user_watch 48464 9959
+add_group 25771
+add_movie 22189 1 16 False
+get_all_movies NONE
+add_group 32937
+add_user_to_group 27526 32937
+group_watch 37423 22189
+add_user 5257 False
+get_all_movies_count FANTASY
+get_group_recommendation 46742
+remove_movie 22189
+add_group 49
+get_all_movies_count COMEDY
+get_all_movies_count DRAMA
+remove_user 5257
+add_group 37800
+get_num_views 25951 DRAMA
+get_all_movies_count FANTASY
+add_user 44579 False
+get_group_recommendation 17870
+add_user_to_group 44579 26143
+remove_group 25771
+group_watch 26143 17562
+remove_group 49
+add_user_to_group 3634 5304
+add_movie 40343 1 7 True
+get_all_movies_count ACTION
+add_group 10170
+add_movie 39489 3 1 True
+group_watch 26143 37719
+add_group 37099
+add_movie 44059 3 9 False
+get_group_recommendation 26143
+group_watch 26143 44059
+remove_movie 40343
+user_watch 44579 44059
+user_watch 44579 44059
+add_movie 17167 0 11 True
+add_group 38192
+add_user_to_group 10247 38192
+user_watch 44579 44059
+get_all_movies_count NONE
+add_user 448 False
+group_watch 26143 44059
+add_user 41050 True
+add_group 41587
+get_all_movies FANTASY
+group_watch 26143 44059
+add_movie 23159 2 4 True
+user_watch 41050 44059
+add_user_to_group 41050 32937
+remove_movie 39489
+get_num_views 41050 NONE
+add_group 46171
+user_watch 41050 23159
+get_num_views 41050 ACTION
+user_watch 41050 17167
+user_watch 41050 23159
+group_watch 32937 44059
+user_watch 44579 44059
+group_watch 32937 23159
+remove_group 32937
+add_movie 19652 4 5 False
+add_group 4786
+remove_group 26348
+get_group_recommendation 26143
+get_group_recommendation 26143
+user_watch 448 44059
+get_all_movies DRAMA
+add_movie 29318 3 19 False
+user_watch 41050 29318
+add_movie 29281 2 3 True
+user_watch 41050 29318
+get_all_movies DRAMA
+get_all_movies COMEDY
+add_user_to_group 41050 38192
+get_all_movies_count ACTION
+get_all_movies_count FANTASY
+add_movie 2772 0 14 False
+add_user_to_group 448 38192
+get_all_movies COMEDY
+get_all_movies ACTION
+add_user_to_group 11753 37099
+get_group_recommendation 26143
+remove_movie 44059
+remove_user 448
+get_all_movies DRAMA
+get_all_movies_count ACTION
+remove_group 10170
+remove_group 46171
+get_num_views 44579 FANTASY
+add_user_to_group 42147 37099
+get_all_movies_count COMEDY
+add_movie 35004 3 20 True
+add_group 30729
+add_group 35460
+get_all_movies_count ACTION
+get_all_movies COMEDY
+group_watch 38192 29318
+user_watch 41050 29318
+user_watch 44579 2772
+get_all_movies_count COMEDY
+get_group_recommendation 26143
+add_user_to_group 9673 37099
+user_watch 44579 2772
+add_movie 6653 1 12 True
+group_watch 38192 35004
+add_group 3176
+add_user_to_group 2278 41587
+group_watch 38192 35004
+user_watch 41050 17167
+get_num_views 41050 COMEDY
+user_watch 44579 29318
+group_watch 26143 2772
+remove_group 26143
+add_user_to_group 44579 35460
+get_all_movies FANTASY
+add_movie 23161 4 19 True
+add_user_to_group 1404 4786
+add_user_to_group 45872 37800
+get_group_recommendation 38192
+add_user 32741 False
+remove_movie 23159
+add_group 6530
+rate_movie 44579 29318 17
+get_all_movies FANTASY
+rate_movie 44579 2772 35
+remove_movie 2772
+user_watch 44579 29318
+remove_user 32741
+add_user 20129 True
+group_watch 38192 29318
+remove_group 3176
+get_group_recommendation 35460
+add_user_to_group 20129 41587
+user_watch 44579 29318
+user_watch 44579 29318
+get_all_movies COMEDY
+user_watch 44579 29318
+get_group_recommendation 35460
+remove_user 20129
+add_group 21233
+remove_group 37099
+get_num_views 41050 FANTASY
+add_user 46636 True
+add_group 16278
+get_all_movies NONE
+get_num_views 46636 ACTION
+remove_group 16278
+add_user_to_group 46636 37800
+group_watch 38192 6653
+get_group_recommendation 38192
+remove_user 44579
+add_group 5417
+get_group_recommendation 38192
+remove_group 37800
+add_movie 26386 1 13 False
+user_watch 41050 29318
+user_watch 32023 29318
+get_all_movies_count ACTION
+add_user_to_group 46636 5417
+remove_user 46636
+remove_user 41050
+rate_movie 48046 26386 56
+add_user_to_group 7296 5304
+get_all_movies DRAMA
+add_group 12746
+add_user_to_group 37719 5417
+get_group_recommendation 32038
+add_movie 23904 0 18 True
+add_user 47461 False
+get_all_movies COMEDY
+add_group 29018
+get_num_views 47461 DRAMA
+get_all_movies DRAMA
+user_watch 18730 23904
+get_all_movies COMEDY
+add_user_to_group 47461 12746
+add_user 28012 True
+add_user_to_group 28012 5304
+add_user 10393 False
+get_group_recommendation 5304
+group_watch 12746 26386
+get_group_recommendation 5304
+get_group_recommendation 5304
+add_movie 27654 1 12 True
+remove_movie 27654
+group_watch 12746 29318
+add_user 3579 True
+get_all_movies_count COMEDY
+remove_user 10393
+rate_movie 28012 29318 88
