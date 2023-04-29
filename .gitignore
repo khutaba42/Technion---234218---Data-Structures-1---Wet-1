@@ -19,7 +19,7 @@ build/
 # Executables
 *.exe
 *.out
-
+!example_test0.out
 # Build files
 build/
 dist/

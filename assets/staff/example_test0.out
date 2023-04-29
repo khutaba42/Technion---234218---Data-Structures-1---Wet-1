@@ -1,0 +1,228 @@
+add_user_to_group: FAILURE
+add_group: SUCCESS
+add_group: SUCCESS
+remove_movie: FAILURE
+rate_movie: FAILURE
+user_watch: FAILURE
+get_num_views: FAILURE
+add_group: SUCCESS
+user_watch: FAILURE
+add_group: SUCCESS
+add_movie: SUCCESS
+get_all_movies: SUCCESS
+22189
+add_group: SUCCESS
+add_user_to_group: FAILURE
+group_watch: FAILURE
+add_user: SUCCESS
+get_all_movies_count: SUCCESS, 0
+get_group_recommendation: FAILURE
+remove_movie: SUCCESS
+add_group: SUCCESS
+get_all_movies_count: SUCCESS, 0
+get_all_movies_count: SUCCESS, 0
+remove_user: SUCCESS
+add_group: SUCCESS
+get_num_views: FAILURE
+get_all_movies_count: SUCCESS, 0
+add_user: SUCCESS
+get_group_recommendation: FAILURE
+add_user_to_group: SUCCESS
+remove_group: SUCCESS
+group_watch: FAILURE
+remove_group: SUCCESS
+add_user_to_group: FAILURE
+add_movie: SUCCESS
+get_all_movies_count: SUCCESS, 0
+add_group: SUCCESS
+add_movie: SUCCESS
+group_watch: FAILURE
+add_group: SUCCESS
+add_movie: SUCCESS
+get_group_recommendation: FAILURE
+group_watch: SUCCESS
+remove_movie: SUCCESS
+user_watch: SUCCESS
+user_watch: SUCCESS
+add_movie: SUCCESS
+add_group: SUCCESS
+add_user_to_group: FAILURE
+user_watch: SUCCESS
+get_all_movies_count: SUCCESS, 3
+add_user: SUCCESS
+group_watch: SUCCESS
+add_user: SUCCESS
+add_group: SUCCESS
+get_all_movies: SUCCESS
+44059
+39489
+group_watch: SUCCESS
+add_movie: SUCCESS
+user_watch: SUCCESS
+add_user_to_group: SUCCESS
+remove_movie: SUCCESS
+get_num_views: SUCCESS, 1
+add_group: SUCCESS
+user_watch: SUCCESS
+get_num_views: SUCCESS, 1
+user_watch: SUCCESS
+user_watch: SUCCESS
+group_watch: SUCCESS
+user_watch: SUCCESS
+group_watch: SUCCESS
+remove_group: SUCCESS
+add_movie: INVALID_INPUT
+add_group: SUCCESS
+remove_group: SUCCESS
+get_group_recommendation: SUCCESS, 44059
+get_group_recommendation: SUCCESS, 44059
+user_watch: SUCCESS
+get_all_movies: FAILURE
+add_movie: SUCCESS
+user_watch: SUCCESS
+add_movie: SUCCESS
+user_watch: SUCCESS
+get_all_movies: FAILURE
+get_all_movies: SUCCESS
+17167
+add_user_to_group: SUCCESS
+get_all_movies_count: SUCCESS, 2
+get_all_movies_count: SUCCESS, 2
+add_movie: SUCCESS
+add_user_to_group: SUCCESS
+get_all_movies: SUCCESS
+2772
+17167
+get_all_movies: SUCCESS
+23159
+29281
+add_user_to_group: FAILURE
+get_group_recommendation: SUCCESS, 29318
+remove_movie: SUCCESS
+remove_user: SUCCESS
+get_all_movies: FAILURE
+get_all_movies_count: SUCCESS, 2
+remove_group: SUCCESS
+remove_group: SUCCESS
+get_num_views: SUCCESS, 7
+add_user_to_group: FAILURE
+get_all_movies_count: SUCCESS, 2
+add_movie: SUCCESS
+add_group: SUCCESS
+add_group: SUCCESS
+get_all_movies_count: SUCCESS, 2
+get_all_movies: SUCCESS
+2772
+17167
+group_watch: SUCCESS
+user_watch: SUCCESS
+user_watch: SUCCESS
+get_all_movies_count: SUCCESS, 2
+get_group_recommendation: SUCCESS, 29318
+add_user_to_group: FAILURE
+user_watch: SUCCESS
+add_movie: SUCCESS
+group_watch: SUCCESS
+add_group: SUCCESS
+add_user_to_group: FAILURE
+group_watch: SUCCESS
+user_watch: SUCCESS
+get_num_views: SUCCESS, 2
+user_watch: SUCCESS
+group_watch: SUCCESS
+remove_group: SUCCESS
+add_user_to_group: SUCCESS
+get_all_movies: SUCCESS
+29318
+35004
+add_movie: INVALID_INPUT
+add_user_to_group: FAILURE
+add_user_to_group: FAILURE
+get_group_recommendation: SUCCESS, 29318
+add_user: SUCCESS
+remove_movie: SUCCESS
+add_group: SUCCESS
+rate_movie: SUCCESS
+get_all_movies: SUCCESS
+29318
+35004
+rate_movie: SUCCESS
+remove_movie: SUCCESS
+user_watch: SUCCESS
+remove_user: SUCCESS
+add_user: SUCCESS
+group_watch: SUCCESS
+remove_group: SUCCESS
+get_group_recommendation: SUCCESS, 29318
+add_user_to_group: SUCCESS
+user_watch: SUCCESS
+user_watch: SUCCESS
+get_all_movies: SUCCESS
+17167
+user_watch: SUCCESS
+get_group_recommendation: SUCCESS, 29318
+remove_user: SUCCESS
+add_group: SUCCESS
+remove_group: SUCCESS
+get_num_views: SUCCESS, 9
+add_user: SUCCESS
+add_group: SUCCESS
+get_all_movies: SUCCESS
+29318
+35004
+17167
+6653
+29281
+get_num_views: SUCCESS, 0
+remove_group: SUCCESS
+add_user_to_group: SUCCESS
+group_watch: SUCCESS
+get_group_recommendation: SUCCESS, 29318
+remove_user: SUCCESS
+add_group: SUCCESS
+get_group_recommendation: SUCCESS, 29318
+remove_group: SUCCESS
+add_movie: SUCCESS
+user_watch: SUCCESS
+user_watch: FAILURE
+get_all_movies_count: SUCCESS, 1
+add_user_to_group: SUCCESS
+remove_user: SUCCESS
+remove_user: SUCCESS
+rate_movie: FAILURE
+add_user_to_group: FAILURE
+get_all_movies: SUCCESS
+6653
+26386
+add_group: SUCCESS
+add_user_to_group: FAILURE
+get_group_recommendation: FAILURE
+add_movie: SUCCESS
+add_user: SUCCESS
+get_all_movies: SUCCESS
+23904
+17167
+add_group: SUCCESS
+get_num_views: SUCCESS, 0
+get_all_movies: SUCCESS
+6653
+26386
+user_watch: FAILURE
+get_all_movies: SUCCESS
+23904
+17167
+add_user_to_group: SUCCESS
+add_user: SUCCESS
+add_user_to_group: SUCCESS
+add_user: SUCCESS
+get_group_recommendation: SUCCESS, 23904
+group_watch: SUCCESS
+get_group_recommendation: SUCCESS, 23904
+get_group_recommendation: SUCCESS, 23904
+add_movie: SUCCESS
+remove_movie: SUCCESS
+group_watch: SUCCESS
+add_user: SUCCESS
+get_all_movies_count: SUCCESS, 2
+remove_user: SUCCESS
+rate_movie: SUCCESS
