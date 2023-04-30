@@ -23,7 +23,10 @@ private:
     public:
         BinaryTree() = default;
         ~BinaryTree() = default;
-        BinaryTree(const BinaryTree &src) : __root_ptr(new Node(src.getRootPtr())) {}
+        BinaryTree(const BinaryTree &src) : __root_ptr((src.isEmpty())
+                                                           ? (nullptr)
+                                                           : (new Node(*(src.getRootPtr())))) /* if the src isn't empty we can access the root, otherwise a disaster */
+        /* added a termination if statement, otherwise it would have been a recursive infinite loop */ {}
         BinaryTree &operator=(const BinaryTree &src);
 
         void clear() { clear_aux(); }
@@ -53,8 +56,14 @@ private:
             ~Node() = default;
             Node(const Node &src) : __parent(nullptr), __height(src.getHeight()), __data(src.getData()), __left(src.__left), __right(src.__right)
             {
-                __left.__root_ptr->setParent(this->__left);
-                __right.__root_ptr->setParent(this->__right);
+                if (hasLeftChild())
+                {
+                    getRootPtr()->setParent(this->__left);
+                }
+                if (hasRightChild())
+                {
+                    getRootPtr()->setParent(this->__right);
+                }
             }
             Node &operator=(const Node &src);
 
