@@ -1,314 +1,655 @@
-#ifndef _AVL_TREE_H_
-#define _AVL_TREE_H_
 
-// library includes
-#include <memory> // for unique_ptr
-#include <math.h>
-#include <exception>
-
-// our includes
+#include <memory>
 #include "ourUtilityFunctions.h"
 
-/* --------------- -*- C++ AVL TREE -*- --------------- */
-/**
- * this data structure assumes that DATA_TYPE has the operators < > =
- */
-template <typename DATA_TYPE>
-class AVLTree;
-//---------------------------------------------------------------AVLTree-----------------------------------------------------------------
+// comment out for no testing
+#define TESTING
+
+
+#ifdef TESTING
+#include <string>
+namespace testing {
+std::string setw(int width) {
+    std::string spaces;
+    for (int i = 0; i < width; i++) {
+        spaces += " ";
+    }
+    return spaces;
+}
+};
+#endif
+
 template <typename DATA_TYPE>
 class AVLTree
 {
-public:
-    AVLTree() = default;
-    ~AVLTree() = default;
-    AVLTree(const AVLTree &src) = default;
-    AVLTree &operator=(const AVLTree &src) = default;
+private:
+    struct Node;
+    using Node_pointer = Node *;
+    using Node_unique_ptr = std::unique_ptr<Node>;
 
-    bool isEmpty() const { return __tree.isEmpty(); }
+public:
+    // error classes
+
+    // if an element do not exists
+    class NoSuchElementException : public std::exception
+    {
+        const char *what() const noexcept override { return "There is no such element"; }
+    };
+    class ElementAlreadyExistsException : public std::exception
+    {
+        const char *what() const noexcept override { return "Element already exists"; }
+    };
+
+    AVLTree() : __root(nullptr), __size(0) {}
+    ~AVLTree() = default;
+    AVLTree(const AVLTree &src) : __root(nullptr), __size(src.__size)
+    {
+        if (!src.isEmpty())
+        {
+            __root.reset(new Node(*(src.__root)));
+        }
+    }
+
+    AVLTree &operator=(const AVLTree &src)
+    {
+        if (&src != this)
+        {
+            if (!src.isEmpty())
+            {
+                __root.reset(new Node(*(src.__root)));
+            }
+            __size = src.__size;
+        }
+        return *this;
+    }
+
+    inline void clear()
+    {
+        __root.reset();
+        __size = 0;
+    }
+
+    inline bool isEmpty() const { return __root.get() == nullptr; }
+
+    inline int height() const { return __root->__height; }
+
+    inline int getSize() const { return __size; }
 
     bool insert(const DATA_TYPE &data);
-    void remove(const DATA_TYPE &data);
+    bool remove(const DATA_TYPE &data);
+#ifdef TESTING
 
-    inline int getHeight() const { return __tree.getHeight(); };
-    inline int getSize() const { return __tree.getSize(); };
+void print() const;
+
+void printNode(const Node_pointer &node_ptr, int depth) const;
+
+#endif
 
 private:
-    friend class Iterator;
-    //---------------------------------------------------------BinaryTree-----------------------------------------------------------------
-    class BinaryTree
+    struct Node
     {
-    public:
-        BinaryTree() = default;
-        ~BinaryTree() = default;
-        BinaryTree(const BinaryTree &src) : __root_ptr((src.isEmpty())
-                                                           ? (nullptr)
-                                                           : (new Node(*(src.getRootPtr())))) /* if the src isn't empty we can access the root, otherwise a disaster */
-        /* added a termination if statement, otherwise it would have been a recursive infinite loop */ {}
-        BinaryTree &operator=(const BinaryTree &src);
-
-        inline void clear() { clear_aux(); }
-        inline bool isEmpty() const { return getRootPtr() == nullptr; }
-        inline int getHeight() const { return __height; }
-        inline int getSize() const { return __size; }
-
-        inline const DATA_TYPE &getRootData() const { return getRootPtr()->getData(); }
-        inline void swap(BinaryTree &other) { __root_ptr.swap(other.__root_ptr); }
-        inline void swapChildren() { getRootPtr()->swapChildren(); }
-
-        inline void setRootData(const DATA_TYPE &other) { getRootPtr()->setData(other); }
-
-        void swapRoots(BinaryTree &other)
-        {
-            DATA_TYPE &temp = getRootData();
-            setRootData(other.getRootData);
-            other.setRootData(temp);
-        }
-
-        inline void swapLeftChildren(BinaryTree &other) { getLeftSubTreePtr()->swap(other->getLeftSubTreePtr()); }
-        inline void swapRightChildren(BinaryTree &other) { getRightSubTreePtr()->swap(other->getRightSubTreePtr()); }
-
-        inline void deleteLeftSubTree() { getLeftSubTreePtr()->clear(); }
-        inline void deleteRightSubTree() { getRightSubTreePtr()->clear(); }
-
-        bool hasRightChild() const
-        {
-            if (isEmpty())
-                return false;
-            return getRootPtr()->hasRightChild();
-        }
-        bool hasLeftChild() const
-        {
-            if (isEmpty())
-                return false;
-            return getRootPtr()->hasLeftChild();
-        }
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        bool insertRootToLeft(DATA_TYPE &data);
-        bool insertRootToRight(DATA_TYPE &data);
-
-        bool rotateLeft();
-        bool rotateRight();
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        int balanceFactor() const
-        {
-            if (isEmpty())
-                return 0;
-            return getLeftSubTreePtr()->getHeight() - getRightSubTreePtr()->getHeight();
-        }
-
-        inline bool isAVLBalanced() const { return our::abs(balanceFactor()) <= 1; }
-
-    private:
-        //---------------------------------------------------------------Node-----------------------------------------------------------------
-        class Node
-        {
-        public:
-            Node(DATA_TYPE &data, const BinaryTree &left, const BinaryTree &right) : __data(data), __left(left), __right(right) {}
-            ~Node() = default;
-            Node(const Node &src) : __height(src.getHeight()), __data(src.getData()), __left(src.__left), __right(src.__right) {}
-            Node &operator=(const Node &src);
-
-            inline bool isLeaf() const { return !hasLeftChild() && !hasRightChild(); }
-            inline int getHeight() const { return __height; }
-            inline const DATA_TYPE &getData() const { return __data; }
-            inline void setData(const DATA_TYPE &other){__data = other};
-            inline void swapChildren() { __left.swap(__right); }
-            inline bool hasLeftChild() const { return !__left.isEmpty(); }
-            inline bool hasRightChild() const { return !__right.isEmpty(); }
-
-        private:
-            DATA_TYPE __data;
-            BinaryTree __left, __right;
-            // Node Helper function
-        };
-        BinaryTree *__parent;
-        std::unique_ptr<Node> __root_ptr;
-        int __size;
+        DATA_TYPE __data;
+        Node_pointer __parent;
+        Node_unique_ptr __left;
+        Node_unique_ptr __right;
         int __height;
-        // Binary Tree helper functions
 
-        inline void clear_aux() { __root_ptr.reset(); }
-        inline Node *getRootPtr() const { return __root_ptr.get(); }
-
-        inline BinaryTree *getLeftSubTreePtr() { return &__root_ptr->__left; }
-        inline BinaryTree *getRightSubTreePtr() { return &__root_ptr->_right; }
-
-        inline void setLeftChild(BinaryTree *leftChild) { getRootPtr()->__right = leftChild; }
-
-        inline BinaryTree *getParent() { return __parent; }
-        inline void setParent(const BinaryTree *parentPtr) { __parent = parentPtr; }
-        void setRoot(Node *root);
-    };
-    BinaryTree __tree;
-
-    class NoSuchElementException : std::exception
-    {
-        const char *what() const noexcept override { return "there is no such element as provided"; };
-    };
-    // AVL helper function
-
-    BinaryTree &search(const DATA_TYPE &data) const
-    {
-        BinaryTree *treePtr = &__tree;
-        while (treePtr->isEmpty())
+        Node(const DATA_TYPE &data) : __parent(nullptr), __data(data), __left(nullptr), __right(nullptr), __height(0) {}
+        ~Node() = default;
+        Node(const Node &src) : __parent(nullptr), __data(src.__data), __left(nullptr), __right(nullptr), __height(src.__height)
         {
-            if (treePtr->getRootPtr()->getData() == data)
+            if (src.hasLeft())
             {
-                return *treePtr;
+                setLeft(src.__left->__data);
             }
-            if (treePtr->getRootPtr()->getData() < data)
+            if (src.hasRight())
             {
-                treePtr = treePtr->getLeftSubTreePtr();
-            }
-            if (treePtr->getRootPtr()->getData() > data)
-            {
-                treePtr = treePtr->getRightSubTreePtr();
+                setRight(src.__right->__data);
             }
         }
-        throw NoSuchElementException();
+
+        void setLeft(const DATA_TYPE &data) // adds only one node to the left
+        {
+            __left.reset(new Node(data));
+            __left->__parent = this;
+            Node_pointer temp = this;
+            while(temp != nullptr)
+            {
+                temp->recalculateHeight();
+                temp = temp->__parent;
+            }
+        }
+
+        void setRight(const DATA_TYPE &data)
+        {
+            __right.reset(new Node(data));
+            __right->__parent = this;
+            Node_pointer temp = this;
+            while(temp != nullptr)
+            {
+                temp->recalculateHeight();
+                temp = temp->__parent;
+            }
+        }
+
+        void recalculateHeight() { __height = 1 + our::max((hasLeft()) ? (__left->__height) : (-1), (hasRight()) ? (__right->__height) : (-1)); }
+        bool isLeaf() const { return ((__left == nullptr) && (__right == nullptr)); }
+        bool isRoot() const { return (__parent == nullptr); }
+        bool hasLeft() const { return (!(__left == nullptr)); }
+        bool hasRight() const { return (!(__right == nullptr)); }
+
+        int balanceFactor() const { return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height)
+                                                                                                    : (-1)); }
+        inline bool isAVLBalanced() const { return our::abs(balanceFactor()) <= 1; }
+    };
+    Node_unique_ptr __root;
+    int __size;
+
+    // helper functions
+
+    /**
+     * @brief takes in a pointer for the node to be rotated to the left
+     *
+     * @warning check for the root (special case)
+                 A                                     B
+                / \                                   / \
+               /   \                                 /   \
+              B     a           ==>                 c     A
+             / \                                         / \
+            /   \                                       /   \
+           c     b                                     b     a
+    */
+    bool rotateLeft(Node_unique_ptr &node_ptr) // node_ptr is pointing to A
+    {
+        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasLeft())
+        {
+            return false;
+        }
+        // else, we can rotate
+        Node_unique_ptr &pA = node_ptr;
+        Node_unique_ptr &pB = pA->__left;
+        Node_unique_ptr &pb = pB->__right;
+
+        Node_unique_ptr temp_ptr;
+        pb.swap(temp_ptr);
+        pb.swap(pA);
+        pB.swap(temp_ptr);
+        pA.swap(temp_ptr);
+
+        /**
+         * now:
+         * pA points to B
+         * pB points to b
+         * pb points to A
+         */
+
+        pA->__parent = pb->__parent; // B's parent points to A's previous parent
+        pb->__parent = pA.get();     // B is the parent of A
+        if (pB.get() != nullptr)
+        {
+            pB->__parent = pb.get();     // A is the parent of b
+        }
+        
+        
+
+        Node_pointer temp = pb.get();
+
+        while (temp)
+        {
+            temp->recalculateHeight();
+            temp = temp->__parent;
+        }
+
+        return true;
+    }
+    /**
+     * @brief takes in a pointer for the node to be rotated to the right
+     *
+     * @warning check for the root (special case)
+                     A                                        B
+                    / \                                      / \
+                   /   \                                    /   \
+                  a     B              ==>                 A     c
+                       / \                                / \
+                      /   \                              /   \
+                     b     c                            a     b
+    */
+    bool rotateRight(Node_unique_ptr &node_ptr)
+    {
+        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasRight() )
+        {
+            return false;
+        }
+        // else, we can rotate
+        Node_unique_ptr &pA = node_ptr;
+        Node_unique_ptr &pB = pA->__right;
+        Node_unique_ptr &pb = pB->__left;
+
+        Node_unique_ptr tempPtr;
+        pb.swap(tempPtr);
+        pb.swap(pA);
+        pB.swap(tempPtr);
+        pA.swap(tempPtr);
+
+        /**
+         * now:
+         * pA points to B
+         * pB points to b
+         * pb points to A
+         */
+
+        pA->__parent = pb->__parent; // B's parent points to A's previous parent
+        pb->__parent = pA.get();     // B is the parent of A
+        if(pB.get() != nullptr)
+        {
+            pB->__parent = pb.get(); 
+        }    // A is the parent of b
+
+        Node_pointer temp = pb.get();
+        while (temp)
+        {
+            temp->recalculateHeight();
+            temp = temp->__parent;
+        }
+
+        return true;
+    }
+    Node_unique_ptr &getUniquePtr(const Node &node)
+    {
+        if (node.isRoot())
+            return __root;
+        if (node.__parent->__left.get() == &node)
+        {
+            return node.__parent->__left;
+        }
+        else
+        {
+            return node.__parent->__right;
+        }
+    }
+    /**
+     * @brief takes in a pointer for the node to be rotated to the left
+     *
+     * @warning check for the root (special case)
+                 A                                     B
+                / \                                   / \
+               /   \                                 /   \
+              B     a           ==>                 A     a
+             / \                                   / \
+            /   \                                 /   \
+           c     b                               c     b
+    */
+    bool swapWithLeftChild(Node_unique_ptr &node_ptr)
+    {
+        if ((node_ptr.get() == nullptr) || (node_ptr->isLeaf()) || !(node_ptr->hasLeft()))
+        {
+            return false;
+        }
+        Node_unique_ptr &pA = node_ptr;
+        Node_unique_ptr &pB = pA->__left;
+        Node_unique_ptr &pb = pB->__right;
+        Node_unique_ptr &pc = pB->__left;
+        Node_unique_ptr &pa = pA->__right;
+        Node_unique_ptr tempPtr;
+
+        pa.swap(pb);
+        pc.swap(tempPtr);
+        pc.swap(pA);
+        pB.swap(tempPtr);
+        pA.swap(tempPtr);
+
+        /**
+         * now:
+         * pA points to B
+         * pB points to c
+         * pb points to a
+         * pa points to b
+         * pc points to A
+         */
+
+        pA->__parent = pc->__parent;
+        pc->__parent = pA.get();
+        if (pB.get() != nullptr)
+        {
+            pB->__parent = pc.get();
+        }
+        if (pb.get() != nullptr)
+        {
+            pb->__parent = pA.get();
+        }
+        if (pa.get() != nullptr)
+        {
+            pa->__parent = pc.get();
+        }
+        our::swap(pA->__height, pc->__height);
+
+        return true;
+    }
+    /**
+     * @brief takes in a pointer for the node to be rotated to the right
+     *
+     * @warning check for the root (special case)
+                 A                                     B
+                / \                                   / \
+               /   \                                 /   \
+              a     B                 ==>           a     A
+                   / \                                   / \
+                  /   \                                 /   \
+                 c     b                               c     b
+    */
+    bool swapWithRightChild(Node_unique_ptr &node_ptr)
+    {
+        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasRight())
+        {
+            return false;
+        }
+        Node_unique_ptr &pA = node_ptr;
+        Node_unique_ptr &pB = pA->__right;
+        Node_unique_ptr &pb = pB->__right;
+        Node_unique_ptr &pc = pB->__left;
+        Node_unique_ptr &pa = pA->__left;
+        Node_unique_ptr tempPtr;
+
+        pa.swap(pc);
+        pb.swap(tempPtr);
+        pb.swap(pA);
+        pB.swap(tempPtr);
+        pA.swap(tempPtr);
+
+        /**
+         * now:
+         * pA points to B
+         * pB points to b
+         * pb points to A
+         * pa points to c
+         * pc points to a
+         */
+
+        pA->__parent = pb->__parent;
+        pb->__parent = pA.get();
+        if (pB.get() != nullptr)
+        {
+            pB->__parent = pb.get();
+        }
+        if (pc.get() != nullptr)
+        {
+            pc->__parent = pA.get();
+        }
+        if (pa.get() != nullptr)
+        {
+            pa->__parent = pb.get();
+        }
+        our::swap(pA->__height, pb->__height);
+
+        return true;
+    }
+
+    void swap(Node_unique_ptr &first, Node_unique_ptr &second)
+    {
+        if (first.get() != second.get()) // don't really need to check for self swap
+        {
+            if (first->__right.get() == second.get())
+            {
+                swapWithRightChild(first);
+            }
+            if (first->__left.get() == second.get())
+            {
+                swapWithLeftChild(first);
+            }
+            else if (second->__right.get() == first.get())
+            {
+                swapWithRightChild(second);
+            }
+            else if (second->__left.get() == first.get())
+            {
+                swapWithLeftChild(second);
+            }
+            else
+            {
+                first->__left.swap(second->__left);           // swap left children
+                first->__right.swap(second->__right);         // swap right children
+                first.swap(second);                           // swap the nodes themselves (what the unique ptrs point to)
+                our::swap(first->__parent, second->__parent); // update the parents
+                our::swap(first->__height, second->__height);
+            }
+        }
     }
 };
+
 
 template <typename DATA_TYPE>
 bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
 {
-    BinaryTree *treePtr = &__tree;
-    bool goLeft = false;
-    while (treePtr->isEmpty())
+    if (isEmpty())
     {
-        if (treePtr->getRootPtr()->getData() == data)
+        __root.reset(new Node(data));
+        __size++;
+        return true;
+    }
+    Node_pointer tempNodePtr = __root.get();
+    while (!tempNodePtr->isLeaf())
+    {
+        if (tempNodePtr->__data == data)
         {
             return false;
         }
-        if (treePtr->getRootPtr()->getData() < data)
+        else if (tempNodePtr->__data > data)
         {
-            treePtr = treePtr->getLeftSubTreePtr();
+            tempNodePtr = tempNodePtr->__left.get();
         }
-        if (treePtr->getRootPtr()->getData() > data)
+        else if (tempNodePtr->__data < data)
         {
-            treePtr = treePtr->getRightSubTreePtr();
+            tempNodePtr = tempNodePtr->__right.get();
         }
     }
-    treePtr->insertRootToLeft(data); // direction doesn't matter
-    while (isTreeAVLBalanced(*treePtr))
+    // check where to go at the leaf
+    if (tempNodePtr->__data == data)
     {
-        treePtr = treePtr->getParent();
+        return false;
     }
-    // treePtr now points to an unbalanced tree, time to balance it
-    // check if all tree is balanced
-    if (treePtr != nullptr) // tree is not balanced
+    else if (tempNodePtr->__data > data)
     {
-        if (treePtr->balanceFactor() >= 2) // left heavy
+        tempNodePtr->setLeft(data);
+    }
+    else if (tempNodePtr->__data < data)
+    {
+        tempNodePtr->setRight(data);
+    }
+    // now the new data is added
+
+    while ((tempNodePtr != nullptr) && (tempNodePtr->isAVLBalanced()))
+    {
+        tempNodePtr = tempNodePtr->__parent;
+    }
+    if(tempNodePtr != nullptr)
+    {
+        if (tempNodePtr->balanceFactor() >= 2) // left heavy
         {
-            if (treePtr->getLeftSubTreePtr()->balanceFactor() >= 0) // LL rotation
+            if (tempNodePtr->__left->balanceFactor() >= 0) // LL rotation
             {
-                treePtr->getLeftSubTreePtr()->rotateLeft();
-                treePtr->rotateLeft();
+                //rotateLeft(tempNodePtr->__left);
+                rotateLeft(getUniquePtr(*(tempNodePtr)));
             }
             else // balanceFactor == -1, LR rotation
             {
-                treePtr->getLeftSubTreePtr()->rotateRight();
-                treePtr->rotateLeft();
+                rotateRight(tempNodePtr->__left);
+                rotateLeft(getUniquePtr(*(tempNodePtr)));
             }
         }
-        if (treePtr->balanceFactor() <= -2) // right heavy
+        if (tempNodePtr->balanceFactor() <= -2) // right heavy
         {
-            if (treePtr->getRightSubTreePtr()->balanceFactor() <= 0) // RR rotation
+            if (tempNodePtr->__right->balanceFactor() <= 0) // RR rotation
             {
-                treePtr->getRightSubTreePtr()->rotateRight();
-                treePtr->rotateRight();
+                //rotateRight(tempNodePtr->__right);
+                rotateRight(getUniquePtr(*(tempNodePtr)));
             }
             else // balanceFactor == 1, RL rotation
             {
-                treePtr->getRightSubTreePtr()->rotateLeft();
-                treePtr->rotateRight();
+                rotateLeft(tempNodePtr->__right);
+                rotateRight(getUniquePtr(*(tempNodePtr)));
             }
         }
     }
+    __size++;
     return true;
 }
-
 template <typename DATA_TYPE>
-void AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
+bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
 {
-    BinaryTree &toDelete = search(data);
-    bool hasLeft = toDelete.hasLeftChild();
-    bool hasRight = toDelete.hasRightChild();
+    // search for the node(unique pointer)
+    Node_pointer tempNodePtr = __root.get();
+    while (tempNodePtr != nullptr)
+    {
+        if (tempNodePtr->__data == data)
+        {
+            break;
+        }
+        else if (tempNodePtr->__data > data)
+        {
+            tempNodePtr = tempNodePtr->__left.get();
+        }
+        else if (tempNodePtr->__data < data)
+        {
+            tempNodePtr = tempNodePtr->__right.get();
+        }
+    }
+    if (tempNodePtr == nullptr)
+    {
+        return false;
+    }
+    // now tempNodePtr points to a (valid) node we want to remove
+    Node_pointer toDeletePtr = tempNodePtr;
+    bool hasLeft = toDeletePtr->hasLeft();
+    bool hasRight = toDeletePtr->hasRight();
+    if (hasLeft && hasRight)
+    {
+        toDeletePtr = toDeletePtr->__right.get();
+        while (toDeletePtr->hasLeft())
+        {
+            toDeletePtr = toDeletePtr->__left.get();
+        }
+        swap(getUniquePtr(*toDeletePtr), getUniquePtr(*tempNodePtr));
+    }
+    Node_unique_ptr &toDeleteUniquePtr = getUniquePtr(*toDeletePtr);
     if (!hasLeft && !hasRight) // leaf
     {
-        toDelete.clear();
+        toDeleteUniquePtr.reset();
     }
     if (hasLeft && !hasRight)
     {
-        toDelete.rotateLeft();
-        toDelete.clear();
+        rotateLeft(toDeleteUniquePtr); // the node we want to delete is the right son of the node that toDeleteUniquePte points to
+        toDeleteUniquePtr->__right.reset();
     }
     if (!hasLeft && hasRight)
     {
-        toDelete.rotateRight();
-        toDelete.clear();
+        rotateRight(toDeleteUniquePtr); // the node we want to delete is the left son of the node that toDeleteUniquePte points to
+        toDeleteUniquePtr->__left.reset();
     }
-    BinaryTree *next = &toDelete;
-    if (hasLeft && hasRight)
-    {
-        next = toDelete.getRightSubTreePtr();
-        while (next->hasLeftChild())
-        {
-            next = next->getLeftSubTreePtr();
-        }
-        toDelete.swapRoots(*next);
 
-        bool hasLeft = next->hasLeftChild();
-        bool hasRight = next->hasRightChild();
-        if (!hasLeft && !hasRight) // leaf
-        {
-            next->clear();
-        }
-        if (hasLeft && !hasRight)
-        {
-            next->rotateLeft();
-            next->clear();
-        }
-        if (!hasLeft && hasRight)
-        {
-            next->rotateRight();
-            next->clear();
-        }
-        // shouldn't get here
-    }
     // now we should update the path in the AVL tree
-    BinaryTree treePtr = next;
-    while (treePtr != nullptr && !isTreeAVLBalanced(*treePtr))
+    Node_pointer temp = toDeleteUniquePtr.get();
+    while (temp != nullptr && !temp->isAVLBalanced())
     {
-        if (treePtr->balanceFactor() >= 2) // left heavy
+        if (temp->balanceFactor() >= 2) // left heavy
         {
-            if (treePtr->getLeftSubTreePtr()->balanceFactor() >= 0) // LL rotation
+            if (temp->__left->balanceFactor() >= 0) // LL rotation
             {
-                treePtr->getLeftSubTreePtr()->rotateLeft();
-                treePtr->rotateLeft();
+                //rotateLeft(temp->__left);
+                rotateLeft(getUniquePtr(*temp));
             }
             else // balanceFactor == -1, LR rotation
             {
-                treePtr->getLeftSubTreePtr()->rotateRight();
-                treePtr->rotateLeft();
+                rotateRight(temp->__left);
+                rotateLeft(getUniquePtr(*temp));
             }
         }
-        if (treePtr->balanceFactor() <= -2) // right heavy
+        if (temp->balanceFactor() <= -2) // right heavy
         {
-            if (treePtr->getRightSubTreePtr()->balanceFactor() <= 0) // RR rotation
+            if (temp->__right->balanceFactor() <= 0) // RR rotation
             {
-                treePtr->getRightSubTreePtr()->rotateRight();
-                treePtr->rotateRight();
+                //rotateRight(temp->__right);
+                rotateRight(getUniquePtr(*temp));
             }
             else // balanceFactor == 1, RL rotation
             {
-                treePtr->getRightSubTreePtr()->rotateLeft();
-                treePtr->rotateRight();
+                rotateLeft(temp->__right);
+                rotateRight(getUniquePtr(*temp));
             }
         }
-        treePtr = treePtr->getParent();
+        temp = temp->__parent;
     }
+    __size--;
+    return true;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifdef TESTING
+template <typename DATA_TYPE>
+void AVLTree<DATA_TYPE>::print() const
+{
+    std::cout << "AVLTree size: " << __size << std::endl;
+    printNode(__root.get(), 0);
+}
+
+
+template <typename DATA_TYPE>
+void AVLTree<DATA_TYPE>::printNode(const Node_pointer &node_ptr, int level) const
+{
+    if (node_ptr == nullptr)
+    {
+        return;
+    }
+
+    printNode(node_ptr->__right.get(), level + 1);
+
+    std::cout << testing::setw(level * 4) << ""; // adjust indentation based on level
+    std::cout << "+--" << node_ptr->__data << std::endl;
+
+    printNode(node_ptr->__left.get(), level + 1);
+}
 #endif
