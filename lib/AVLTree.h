@@ -384,6 +384,9 @@ private:
         return true;
     }
 
+    void swapData(Node_unique_ptr &first, Node_unique_ptr &second) {
+        our::swap(first->__data,second->__data);
+    }
     void swap(Node_unique_ptr &first, Node_unique_ptr &second)
     {
         if (first.get() != second.get()) // don't really need to check for self swap
@@ -528,9 +531,13 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
         {
             toDeletePtr = toDeletePtr->__left.get();
         }
-        swap(getUniquePtr(*toDeletePtr), getUniquePtr(*tempNodePtr));
+        our::swap(toDeletePtr->__data, tempNodePtr->__data);
+        // think of better solution 
     }
+    Node_pointer parentOfToDelete = toDeletePtr->__parent;
     Node_unique_ptr &toDeleteUniquePtr = getUniquePtr(*toDeletePtr);
+    hasLeft = toDeletePtr->hasLeft();
+    hasRight = toDeletePtr->hasRight();
     if (!hasLeft && !hasRight) // leaf
     {
         toDeleteUniquePtr.reset();
@@ -539,41 +546,47 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
     {
         rotateLeft(toDeleteUniquePtr); // the node we want to delete is the right son of the node that toDeleteUniquePte points to
         toDeleteUniquePtr->__right.reset();
+        parentOfToDelete = toDeletePtr;
     }
     if (!hasLeft && hasRight)
     {
         rotateRight(toDeleteUniquePtr); // the node we want to delete is the left son of the node that toDeleteUniquePte points to
         toDeleteUniquePtr->__left.reset();
+        parentOfToDelete = toDeletePtr;
     }
 
     // now we should update the path in the AVL tree
-    Node_pointer temp = toDeleteUniquePtr.get();
-    while (temp != nullptr && !temp->isAVLBalanced())
+    Node_pointer temp = parentOfToDelete;
+    while (temp != nullptr)
     {
-        if (temp->balanceFactor() >= 2) // left heavy
+        temp->recalculateHeight();
+        if (!temp->isAVLBalanced())
         {
-            if (temp->__left->balanceFactor() >= 0) // LL rotation
+            if (temp->balanceFactor() >= 2) // left heavy
             {
-                //rotateLeft(temp->__left);
-                rotateLeft(getUniquePtr(*temp));
+                if (temp->__left->balanceFactor() >= 0) // LL rotation
+                {
+                    //rotateLeft(temp->__left);
+                    rotateLeft(getUniquePtr(*temp));
+                }
+                else // balanceFactor == -1, LR rotation
+                {
+                    rotateRight(temp->__left);
+                    rotateLeft(getUniquePtr(*temp));
+                }
             }
-            else // balanceFactor == -1, LR rotation
+            if (temp->balanceFactor() <= -2) // right heavy
             {
-                rotateRight(temp->__left);
-                rotateLeft(getUniquePtr(*temp));
-            }
-        }
-        if (temp->balanceFactor() <= -2) // right heavy
-        {
-            if (temp->__right->balanceFactor() <= 0) // RR rotation
-            {
-                //rotateRight(temp->__right);
-                rotateRight(getUniquePtr(*temp));
-            }
-            else // balanceFactor == 1, RL rotation
-            {
-                rotateLeft(temp->__right);
-                rotateRight(getUniquePtr(*temp));
+                if (temp->__right->balanceFactor() <= 0) // RR rotation
+                {
+                    //rotateRight(temp->__right);
+                    rotateRight(getUniquePtr(*temp));
+                }
+                else // balanceFactor == 1, RL rotation
+                {
+                    rotateLeft(temp->__right);
+                    rotateRight(getUniquePtr(*temp));
+                }
             }
         }
         temp = temp->__parent;
