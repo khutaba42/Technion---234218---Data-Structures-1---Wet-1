@@ -5,18 +5,9 @@
 // comment out for no testing
 #define TESTING
 
-
 #ifdef TESTING
-#include <string>
-namespace testing {
-std::string setw(int width) {
-    std::string spaces;
-    for (int i = 0; i < width; i++) {
-        spaces += " ";
-    }
-    return spaces;
-}
-};
+// includes for testing
+
 #endif
 
 template <typename DATA_TYPE>
@@ -77,11 +68,12 @@ public:
 
     bool insert(const DATA_TYPE &data);
     bool remove(const DATA_TYPE &data);
+
 #ifdef TESTING
 
-void print() const;
+    void print() const;
 
-void printNode(const Node_pointer &node_ptr, int depth) const;
+    void printNode(const Node_pointer &node_ptr, int depth) const;
 
 #endif
 
@@ -113,7 +105,7 @@ private:
             __left.reset(new Node(data));
             __left->__parent = this;
             Node_pointer temp = this;
-            while(temp != nullptr)
+            while (temp != nullptr)
             {
                 temp->recalculateHeight();
                 temp = temp->__parent;
@@ -125,7 +117,7 @@ private:
             __right.reset(new Node(data));
             __right->__parent = this;
             Node_pointer temp = this;
-            while(temp != nullptr)
+            while (temp != nullptr)
             {
                 temp->recalculateHeight();
                 temp = temp->__parent;
@@ -139,7 +131,7 @@ private:
         bool hasRight() const { return (!(__right == nullptr)); }
 
         int balanceFactor() const { return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height)
-                                                                                                    : (-1)); }
+                                                                                                     : (-1)); }
         inline bool isAVLBalanced() const { return our::abs(balanceFactor()) <= 1; }
     };
     Node_unique_ptr __root;
@@ -166,39 +158,32 @@ private:
             return false;
         }
         // else, we can rotate
-        Node_unique_ptr &pA = node_ptr;
-        Node_unique_ptr &pB = pA->__left;
-        Node_unique_ptr &pb = pB->__right;
+        Node_unique_ptr &pointer_to_root = node_ptr;
+        Node_unique_ptr &pointer_to_A_left = pointer_to_root->__left;
+        Node_unique_ptr &pointer_to_B_right = pointer_to_A_left->__right;
 
-        Node_unique_ptr temp_ptr;
-        pb.swap(temp_ptr);
-        pb.swap(pA);
-        pB.swap(temp_ptr);
-        pA.swap(temp_ptr);
+        Node_unique_ptr temp_unique_pointer;
+        pointer_to_B_right.swap(temp_unique_pointer);
+        pointer_to_B_right.swap(pointer_to_root);
+        pointer_to_A_left.swap(temp_unique_pointer);
+        pointer_to_root.swap(temp_unique_pointer);
 
         /**
          * now:
-         * pA points to B
-         * pB points to b
-         * pb points to A
+         * pointer_to_root points to B
+         * pointer_to_A_left points to b
+         * pointer_to_B_right points to A
          */
 
-        pA->__parent = pb->__parent; // B's parent points to A's previous parent
-        pb->__parent = pA.get();     // B is the parent of A
-        if (pB.get() != nullptr)
+        pointer_to_root->__parent = pointer_to_B_right->__parent; // B's parent points to A's previous parent
+        pointer_to_B_right->__parent = pointer_to_root.get();     // B is the parent of A
+        if (pointer_to_A_left.get() != nullptr)
         {
-            pB->__parent = pb.get();     // A is the parent of b
+            pointer_to_A_left->__parent = pointer_to_B_right.get(); // A is the parent of b
         }
-        
-        
 
-        Node_pointer temp = pb.get();
-
-        while (temp)
-        {
-            temp->recalculateHeight();
-            temp = temp->__parent;
-        }
+        pointer_to_B_right->recalculateHeight();
+        pointer_to_root->recalculateHeight();
 
         return true;
     }
@@ -216,7 +201,7 @@ private:
     */
     bool rotateRight(Node_unique_ptr &node_ptr)
     {
-        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasRight() )
+        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasRight())
         {
             return false;
         }
@@ -240,18 +225,14 @@ private:
 
         pA->__parent = pb->__parent; // B's parent points to A's previous parent
         pb->__parent = pA.get();     // B is the parent of A
-        if(pB.get() != nullptr)
+        if (pB.get() != nullptr)
         {
-            pB->__parent = pb.get(); 
-        }    // A is the parent of b
+            pB->__parent = pb.get();
+        } // A is the parent of b
 
-        Node_pointer temp = pb.get();
-        while (temp)
-        {
-            temp->recalculateHeight();
-            temp = temp->__parent;
-        }
-
+        pb->recalculateHeight();
+        pA->recalculateHeight();
+        
         return true;
     }
     Node_unique_ptr &getUniquePtr(const Node &node)
@@ -384,8 +365,9 @@ private:
         return true;
     }
 
-    void swapData(Node_unique_ptr &first, Node_unique_ptr &second) {
-        our::swap(first->__data,second->__data);
+    void swapData(Node_unique_ptr &first, Node_unique_ptr &second)
+    {
+        our::swap(first->__data, second->__data);
     }
     void swap(Node_unique_ptr &first, Node_unique_ptr &second)
     {
@@ -418,7 +400,6 @@ private:
         }
     }
 };
-
 
 template <typename DATA_TYPE>
 bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
@@ -460,17 +441,26 @@ bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
     }
     // now the new data is added
 
+    Node_pointer tempFixHeight = tempNodePtr;
+    while(tempFixHeight != nullptr)
+    {
+        tempFixHeight->recalculateHeight();
+        tempFixHeight = tempFixHeight->__parent;
+    }
+    tempFixHeight = tempNodePtr;
+
     while ((tempNodePtr != nullptr) && (tempNodePtr->isAVLBalanced()))
     {
         tempNodePtr = tempNodePtr->__parent;
     }
-    if(tempNodePtr != nullptr)
+
+    if (tempNodePtr != nullptr)
     {
         if (tempNodePtr->balanceFactor() >= 2) // left heavy
         {
             if (tempNodePtr->__left->balanceFactor() >= 0) // LL rotation
             {
-                //rotateLeft(tempNodePtr->__left);
+                // rotateLeft(tempNodePtr->__left);
                 rotateLeft(getUniquePtr(*(tempNodePtr)));
             }
             else // balanceFactor == -1, LR rotation
@@ -483,7 +473,7 @@ bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
         {
             if (tempNodePtr->__right->balanceFactor() <= 0) // RR rotation
             {
-                //rotateRight(tempNodePtr->__right);
+                // rotateRight(tempNodePtr->__right);
                 rotateRight(getUniquePtr(*(tempNodePtr)));
             }
             else // balanceFactor == 1, RL rotation
@@ -492,6 +482,11 @@ bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
                 rotateRight(getUniquePtr(*(tempNodePtr)));
             }
         }
+    }
+    while(tempFixHeight != nullptr)
+    {
+        tempFixHeight->recalculateHeight();
+        tempFixHeight = tempFixHeight->__parent;
     }
     __size++;
     return true;
@@ -532,7 +527,7 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
             toDeletePtr = toDeletePtr->__left.get();
         }
         our::swap(toDeletePtr->__data, tempNodePtr->__data);
-        // think of better solution 
+        // think of better solution
     }
     Node_pointer parentOfToDelete = toDeletePtr->__parent;
     Node_unique_ptr &toDeleteUniquePtr = getUniquePtr(*toDeletePtr);
@@ -566,7 +561,7 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
             {
                 if (temp->__left->balanceFactor() >= 0) // LL rotation
                 {
-                    //rotateLeft(temp->__left);
+                    // rotateLeft(temp->__left);
                     rotateLeft(getUniquePtr(*temp));
                 }
                 else // balanceFactor == -1, LR rotation
@@ -579,7 +574,7 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
             {
                 if (temp->__right->balanceFactor() <= 0) // RR rotation
                 {
-                    //rotateRight(temp->__right);
+                    // rotateRight(temp->__right);
                     rotateRight(getUniquePtr(*temp));
                 }
                 else // balanceFactor == 1, RL rotation
@@ -595,63 +590,22 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
     return true;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #ifdef TESTING
 template <typename DATA_TYPE>
 void AVLTree<DATA_TYPE>::print() const
 {
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
     std::cout << "AVLTree size: " << __size << std::endl;
     printNode(__root.get(), 0);
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
 }
 
-
 template <typename DATA_TYPE>
-void AVLTree<DATA_TYPE>::printNode(const Node_pointer &node_ptr, int level) const
+void AVLTree<DATA_TYPE>::printNode(const Node_pointer& node_ptr, int level) const
 {
     if (node_ptr == nullptr)
     {
@@ -660,9 +614,15 @@ void AVLTree<DATA_TYPE>::printNode(const Node_pointer &node_ptr, int level) cons
 
     printNode(node_ptr->__right.get(), level + 1);
 
-    std::cout << testing::setw(level * 4) << ""; // adjust indentation based on level
+    // Print indentation based on level
+    for (int i = 0; i < level * 4; i++)
+    {
+        std::cout << " ";
+    }
+
     std::cout << "+--" << node_ptr->__data << std::endl;
 
     printNode(node_ptr->__left.get(), level + 1);
 }
+
 #endif
