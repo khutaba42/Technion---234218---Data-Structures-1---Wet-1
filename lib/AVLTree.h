@@ -1,10 +1,11 @@
 
 #include <memory>
 #include "ourUtilityFunctions.h"
+#include <exception>
 
 // comment out for no testing
 #define TESTING
-
+#include <iostream>
 #ifdef TESTING
 // includes for testing
 
@@ -68,6 +69,27 @@ public:
 
     bool insert(const DATA_TYPE &data);
     bool remove(const DATA_TYPE &data);
+
+    DATA_TYPE& find(const DATA_TYPE &data)
+    {
+        Node_pointer tempNodePtr = __root.get();
+        while (!tempNodePtr)
+        {
+            if (tempNodePtr->__data == data)
+            {
+                return tempNodePtr->__data;
+            }
+            else if (tempNodePtr->__data > data)
+            {
+                tempNodePtr = tempNodePtr->__left.get();
+            }
+            else if (tempNodePtr->__data < data)
+            {
+                tempNodePtr = tempNodePtr->__right.get();
+            }
+        }
+        throw NoSuchElementException();
+    }
 
 #ifdef TESTING
 
