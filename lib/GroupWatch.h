@@ -43,7 +43,7 @@ public:
         }
         return __numOfMoviesWatched[(unsigned long)genre];
     }
-    
+
     bool operator==(const GroupWatch &other) const
     {
         return __id == other.__id;

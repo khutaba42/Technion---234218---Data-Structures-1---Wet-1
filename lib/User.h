@@ -34,6 +34,11 @@ public:
             throw UserAlreadyInGroupException();
         }
         __group = group;
+        
+        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::ACTION] = __group->getNumOfViews(Genre::ACTION);
+        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::COMEDY] = __group->getNumOfViews(Genre::COMEDY);
+        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::DRAMA] = __group->getNumOfViews(Genre::DRAMA);
+        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::FANTASY] = __group->getNumOfViews(Genre::FANTASY);
     }
 
     // possible chang
