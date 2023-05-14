@@ -5,13 +5,32 @@
 
 // comment out for no testing
 #define TESTING
-#include <iostream>
+
+
+
+
+
+
 #ifdef TESTING
 // includes for testing
-
+#include <iostream>
 #endif
 
-template <typename DATA_TYPE>
+
+
+// for comparing
+enum class Comparison {less, equal, greater};
+
+template<typename T>
+Comparison NormalCompare(const T& left, const T& right){
+    if (left < right)
+        return Comparison::less;
+    if (left > right)
+        return Comparison::greater;
+    else return Comparison::equal;
+}
+
+template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&) = NormalCompare<DATA_TYPE>>
 class AVLTree
 {
 private:
@@ -75,15 +94,15 @@ public:
         Node_pointer tempNodePtr = __root.get();
         while (!tempNodePtr)
         {
-            if (tempNodePtr->__data == data)
+            if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
             {
                 return tempNodePtr->__data;
             }
-            else if (tempNodePtr->__data > data)
+            else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
             {
                 tempNodePtr = tempNodePtr->__left.get();
             }
-            else if (tempNodePtr->__data < data)
+            else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
             {
                 tempNodePtr = tempNodePtr->__right.get();
             }
@@ -423,8 +442,8 @@ private:
     }
 };
 
-template <typename DATA_TYPE>
-bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
+template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
 {
     if (isEmpty())
     {
@@ -435,29 +454,29 @@ bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
     Node_pointer tempNodePtr = __root.get();
     while (!tempNodePtr->isLeaf())
     {
-        if (tempNodePtr->__data == data)
+        if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
         {
             return false;
         }
-        else if (tempNodePtr->__data > data)
+        else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
         {
             tempNodePtr = tempNodePtr->__left.get();
         }
-        else if (tempNodePtr->__data < data)
+        else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
         {
             tempNodePtr = tempNodePtr->__right.get();
         }
     }
     // check where to go at the leaf
-    if (tempNodePtr->__data == data)
+    if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
     {
         return false;
     }
-    else if (tempNodePtr->__data > data)
+    else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
     {
         tempNodePtr->setLeft(data);
     }
-    else if (tempNodePtr->__data < data)
+    else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
     {
         tempNodePtr->setRight(data);
     }
@@ -513,22 +532,22 @@ bool AVLTree<DATA_TYPE>::insert(const DATA_TYPE &data)
     __size++;
     return true;
 }
-template <typename DATA_TYPE>
-bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
+template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
 {
     // search for the node(unique pointer)
     Node_pointer tempNodePtr = __root.get();
     while (tempNodePtr != nullptr)
     {
-        if (tempNodePtr->__data == data)
+        if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
         {
             break;
         }
-        else if (tempNodePtr->__data > data)
+        else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
         {
             tempNodePtr = tempNodePtr->__left.get();
         }
-        else if (tempNodePtr->__data < data)
+        else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
         {
             tempNodePtr = tempNodePtr->__right.get();
         }
@@ -613,8 +632,8 @@ bool AVLTree<DATA_TYPE>::remove(const DATA_TYPE &data)
 }
 
 #ifdef TESTING
-template <typename DATA_TYPE>
-void AVLTree<DATA_TYPE>::print() const
+template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+void AVLTree<DATA_TYPE, compFunction>::print() const
 {
     std::cout << std::endl;
     std::cout << std::endl;
@@ -626,8 +645,8 @@ void AVLTree<DATA_TYPE>::print() const
     std::cout << std::endl;
 }
 
-template <typename DATA_TYPE>
-void AVLTree<DATA_TYPE>::printNode(const Node_pointer& node_ptr, int level) const
+template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer& node_ptr, int level) const
 {
     if (node_ptr == nullptr)
     {
