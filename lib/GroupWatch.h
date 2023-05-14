@@ -1,8 +1,7 @@
 #ifndef _GROUP_WATCH_H_
 #define _GROUP_WATCH_H_
 
-#include "User.h"
-#include "AVLTree.h"
+#include "includes.h"
 
 class GroupWatch
 {

@@ -1,9 +1,7 @@
 #ifndef _USER_H_
 #define _USER_H_
 
-#include "wet1util.h"
-#include "GroupWatch.h"
-#include <exception>
+#include "includes.h"
 
 class User
 {

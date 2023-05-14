@@ -16,13 +16,14 @@
 #define STREAMINGDBA1_H_
 
 #include "wet1util.h"
+#include "includes.h"
 
 class streaming_database {
 private:
-	//
-	// Here you may add anything you want
-	//
-	
+	AVLTree<Movie> __movies;
+	AVLTree<User> __users;
+	AVLTree<GroupWatch> __groups;
+
 public:
 	// <DO-NOT-MODIFY> {
 	
