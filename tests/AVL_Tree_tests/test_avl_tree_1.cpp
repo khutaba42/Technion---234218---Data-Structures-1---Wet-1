@@ -115,16 +115,28 @@ int main() {
 
     // test height
     assert(avl.insert(10) == true);
+    avl.print();
     assert(avl.insert(20) == true);
+    avl.print();
     assert(avl.insert(30) == true);
+    avl.print();
     assert(avl.insert(40) == true);
+    avl.print();
     assert(avl.insert(50) == true);
+    avl.print();
     assert(avl.insert(60) == true);
+    avl.print();
     assert(avl.insert(70) == true);
+    avl.print();
     assert(avl.insert(80) == true);
+    avl.print();
     assert(avl.insert(90) == true);
+    avl.print();
     assert(avl.insert(100) == true);
+    avl.print();
+    std::cout << avl.height() << std::endl;
     assert(avl.height() == 3);
+    avl.print();
 
     std::cout << "All tests passed!" << std::endl;
     return 0;
