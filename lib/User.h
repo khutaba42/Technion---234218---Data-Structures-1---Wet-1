@@ -2,6 +2,7 @@
 #define _USER_H_
 
 #include "includes.h"
+#include "User&GroupWatchInclude.h"
 
 class User
 {
@@ -13,9 +14,10 @@ public:
         const char *what() const noexcept override { return "The user is already in a group, cant add it to more than 1."; }
     };
 
-    User(int id) : __id(id),
-                   __numOfSoloMoviesWatched{0},
-                   __numOfGroupMoviesWatchedWhenJoined{0},
+    User(int id, bool vip = false) : __id(id),
+                    __vip(vip),
+                   __soloViews{0},
+                   __groupViewsWhenJoined{0},
                    __group(nullptr)
     {
     }
@@ -32,11 +34,23 @@ public:
             throw UserAlreadyInGroupException();
         }
         __group = group;
-        
-        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::ACTION] = __group->getNumOfViews(Genre::ACTION);
-        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::COMEDY] = __group->getNumOfViews(Genre::COMEDY);
-        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::DRAMA] = __group->getNumOfViews(Genre::DRAMA);
-        __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::FANTASY] = __group->getNumOfViews(Genre::FANTASY);
+
+        for (short i = 0; i <= (unsigned long)Genre::NONE; i++)
+        {
+            __groupViewsWhenJoined[i] = __group->getNumOfViews((Genre)i);
+        }
+    }
+
+    void removeUserFromGroup()
+    {
+        if(!isInGroup())
+            return;
+        for (short i = 0; i < (unsigned long)Genre::NONE; i++)
+        {
+            __group->addViews((Genre)i, -__soloViews[i]);
+        }
+        __group->removeUser(std::shared_ptr<User>(this));
+        __group = nullptr;
     }
 
     // possible chang
@@ -46,34 +60,18 @@ public:
         if (isInGroup())
         {
             viewsWithGroup = __group->getNumOfViews(genre);
-            if (genre == Genre::NONE)
-            {
-                for (int i = 0; i < (unsigned long)Genre::NONE; i++)
-                {
-                    viewsWithGroup -= __numOfGroupMoviesWatchedWhenJoined[i];
-                }
-            }
-            else
-            {
-                viewsWithGroup -= __numOfGroupMoviesWatchedWhenJoined[(unsigned long)genre];
-            }
+            viewsWithGroup -= __groupViewsWhenJoined[(unsigned long)genre];
         }
-
-        if (genre == Genre::NONE)
-        {
-            int sum = 0;
-            for (int i = 0; i < (unsigned long)Genre::NONE; i++)
-            {
-                sum += __numOfSoloMoviesWatched[i];
-            }
-            return viewsWithGroup + sum;
-        }
-        return viewsWithGroup + __numOfSoloMoviesWatched[(unsigned long)genre];
+        return viewsWithGroup + __soloViews[(unsigned long)genre];
     }
 
     void watch(Genre genre)
     {
-        __numOfSoloMoviesWatched[(unsigned long)genre]++;
+        if(genre == Genre::NONE)
+            return;
+        __soloViews[(unsigned long)genre]++;
+        __soloViews[(unsigned long)Genre::NONE]++;
+        __group->addViews(genre, 1);
     }
 
     bool operator==(const User &other) const
@@ -93,8 +91,9 @@ public:
 
 private:
     int __id;
-    int __numOfSoloMoviesWatched[(unsigned long)Genre::NONE];
-    int __numOfGroupMoviesWatchedWhenJoined[(unsigned long)Genre::NONE];
+    bool __vip;
+    int __soloViews[(unsigned long)Genre::NONE + 1];
+    int __groupViewsWhenJoined[(unsigned long)Genre::NONE + 1];
     GroupWatch *__group;
 };
 
