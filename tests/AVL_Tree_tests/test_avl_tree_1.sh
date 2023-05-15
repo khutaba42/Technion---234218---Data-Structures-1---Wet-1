@@ -5,9 +5,11 @@ do
   echo "\n"
 done
 
-g++ -g -I./lib -std=c++11 tests/AVL_Tree_tests/test_avl_tree.cpp -o tests/AVL_Tree_tests/test_avl_tree.out
+g++ -g -I./lib -std=c++11 tests/AVL_Tree_tests/test_avl_tree_1.cpp -o tests/AVL_Tree_tests/test_avl_tree_1.out
 
-tests/AVL_Tree_tests/test_avl_tree.out
+tests/AVL_Tree_tests/test_avl_tree_1.out
+
+rm tests/AVL_Tree_tests/test_avl_tree_1.out
 
 for i in {1..2}
 do
