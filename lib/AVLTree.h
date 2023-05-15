@@ -6,31 +6,31 @@
 // comment out for no testing
 #define TESTING
 
-
-
-
-
-
 #ifdef TESTING
 // includes for testing
 #include <iostream>
 #endif
 
-
-
 // for comparing
-enum class Comparison {less, equal, greater};
+enum class Comparison
+{
+    less,
+    equal,
+    greater
+};
 
-template<typename T>
-Comparison NormalCompare(const T& left, const T& right){
+template <typename T>
+Comparison NormalCompare(const T &left, const T &right)
+{
     if (left < right)
         return Comparison::less;
-    if (left > right)
+    else if (left > right)
         return Comparison::greater;
-    else return Comparison::equal;
+    else
+        return Comparison::equal;
 }
 
-template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&) = NormalCompare<DATA_TYPE>>
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &) = NormalCompare<DATA_TYPE>>
 class AVLTree
 {
 private:
@@ -51,7 +51,7 @@ public:
         const char *what() const noexcept override { return "Element already exists"; }
     };
 
-    AVLTree() : __root(nullptr), __size(0) {}
+    AVLTree() : __root(nullptr), __size(0), __min_element_ptr(nullptr), __max_element_ptr(nullptr) {}
     ~AVLTree() = default;
     AVLTree(const AVLTree &src) : __root(nullptr), __size(src.__size)
     {
@@ -89,20 +89,23 @@ public:
     bool insert(const DATA_TYPE &data);
     bool remove(const DATA_TYPE &data);
 
-    DATA_TYPE& find(const DATA_TYPE &data)
+    const DATA_TYPE& getMax() const {return __max_element_ptr->getData();}
+    const DATA_TYPE& getMin() const {return __min_element_ptr->getData();}
+    const DATA_TYPE &find(const DATA_TYPE &data) const
     {
         Node_pointer tempNodePtr = __root.get();
         while (!tempNodePtr)
         {
-            if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
+            Comparison result = compFunction(tempNodePtr->getData(), data);
+            if (result == Comparison::equal)
             {
-                return tempNodePtr->__data;
+                return tempNodePtr->getData();
             }
-            else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
+            else if (result == Comparison::greater)
             {
                 tempNodePtr = tempNodePtr->__left.get();
             }
-            else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
+            else if (result == Comparison::less)
             {
                 tempNodePtr = tempNodePtr->__right.get();
             }
@@ -119,6 +122,10 @@ public:
 #endif
 
 private:
+    Node_unique_ptr __root;
+    int __size;
+    Node_pointer __min_element_ptr;
+    Node_pointer __max_element_ptr;
     struct Node
     {
         DATA_TYPE __data;
@@ -129,18 +136,18 @@ private:
 
         Node(const DATA_TYPE &data) : __parent(nullptr), __data(data), __left(nullptr), __right(nullptr), __height(0) {}
         ~Node() = default;
-        Node(const Node &src) : __parent(nullptr), __data(src.__data), __left(nullptr), __right(nullptr), __height(src.__height)
+        Node(const Node &src) : __parent(nullptr), __data(src.getData()), __left(nullptr), __right(nullptr), __height(src.__height)
         {
             if (src.hasLeft())
             {
-                setLeft(src.__left->__data);
+                setLeft(src.__left->getData());
             }
             if (src.hasRight())
             {
-                setRight(src.__right->__data);
+                setRight(src.__right->getData());
             }
         }
-
+        inline DATA_TYPE &getData() { return __data; }
         void setLeft(const DATA_TYPE &data) // adds only one node to the left
         {
             __left.reset(new Node(data));
@@ -165,18 +172,17 @@ private:
             }
         }
 
-        void recalculateHeight() { __height = 1 + our::max((hasLeft()) ? (__left->__height) : (-1), (hasRight()) ? (__right->__height) : (-1)); }
-        bool isLeaf() const { return ((__left == nullptr) && (__right == nullptr)); }
-        bool isRoot() const { return (__parent == nullptr); }
-        bool hasLeft() const { return (!(__left == nullptr)); }
-        bool hasRight() const { return (!(__right == nullptr)); }
+        inline void recalculateHeight() { __height = 1 + our::max((hasLeft()) ? (__left->__height) : (-1), (hasRight()) ? (__right->__height) : (-1)); }
+        inline bool isLeaf() const { return ((__left == nullptr) && (__right == nullptr)); }
+        inline bool isRoot() const { return (__parent == nullptr); }
+        inline bool hasLeft() const { return (!(__left == nullptr)); }
+        inline bool hasRight() const { return (!(__right == nullptr)); }
 
-        int balanceFactor() const { return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height)
+        inline int balanceFactor() const { return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height)
                                                                                                      : (-1)); }
         inline bool isAVLBalanced() const { return our::abs(balanceFactor()) <= 1; }
     };
-    Node_unique_ptr __root;
-    int __size;
+
 
     // helper functions
 
@@ -273,7 +279,7 @@ private:
 
         pb->recalculateHeight();
         pA->recalculateHeight();
-        
+
         return true;
     }
     Node_unique_ptr &getUniquePtr(const Node &node)
@@ -408,7 +414,7 @@ private:
 
     void swapData(Node_unique_ptr &first, Node_unique_ptr &second)
     {
-        our::swap(first->__data, second->__data);
+        our::swap(first->getData(), second->getData());
     }
     void swap(Node_unique_ptr &first, Node_unique_ptr &second)
     {
@@ -442,48 +448,51 @@ private:
     }
 };
 
-template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
 bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
 {
     if (isEmpty())
     {
         __root.reset(new Node(data));
         __size++;
+        __min_element_ptr = __max_element_ptr = __root.get();
         return true;
     }
     Node_pointer tempNodePtr = __root.get();
     while (!tempNodePtr->isLeaf())
     {
-        if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
+        Comparison result = compFunction(tempNodePtr->getData(), data);
+        if (result == Comparison::equal)
         {
             return false;
         }
-        else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
+        else if (result == Comparison::greater)
         {
             tempNodePtr = tempNodePtr->__left.get();
         }
-        else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
+        else if (result == Comparison::less)
         {
             tempNodePtr = tempNodePtr->__right.get();
         }
     }
     // check where to go at the leaf
-    if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
+    Comparison result = compFunction(tempNodePtr->getData(), data);
+    if (result == Comparison::equal)
     {
         return false;
     }
-    else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
+    else if (result == Comparison::greater)
     {
         tempNodePtr->setLeft(data);
     }
-    else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
+    else if (result == Comparison::less)
     {
         tempNodePtr->setRight(data);
     }
     // now the new data is added
 
     Node_pointer tempFixHeight = tempNodePtr;
-    while(tempFixHeight != nullptr)
+    while (tempFixHeight != nullptr)
     {
         tempFixHeight->recalculateHeight();
         tempFixHeight = tempFixHeight->__parent;
@@ -524,30 +533,42 @@ bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
             }
         }
     }
-    while(tempFixHeight != nullptr)
+    while (tempFixHeight != nullptr)
     {
         tempFixHeight->recalculateHeight();
         tempFixHeight = tempFixHeight->__parent;
     }
     __size++;
+    __min_element_ptr = __root.get();
+    while (__min_element_ptr->__left.get())
+    {
+        __min_element_ptr = __min_element_ptr->__left.get();
+    }
+     __max_element_ptr = __root.get();
+    while (__max_element_ptr->__left.get())
+    {
+        __max_element_ptr = __max_element_ptr->__left.get();
+    }   
+
     return true;
 }
-template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
 bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
 {
     // search for the node(unique pointer)
     Node_pointer tempNodePtr = __root.get();
     while (tempNodePtr != nullptr)
     {
-        if (compFunction(tempNodePtr->__data, data) == Comparison::equal)
+        Comparison result = compFunction(tempNodePtr->getData(), data);
+        if (result == Comparison::equal)
         {
             break;
         }
-        else if (compFunction(tempNodePtr->__data, data) == Comparison::greater)
+        else if (result == Comparison::greater)
         {
             tempNodePtr = tempNodePtr->__left.get();
         }
-        else if (compFunction(tempNodePtr->__data, data) == Comparison::less)
+        else if (result == Comparison::less)
         {
             tempNodePtr = tempNodePtr->__right.get();
         }
@@ -567,7 +588,7 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
         {
             toDeletePtr = toDeletePtr->__left.get();
         }
-        our::swap(toDeletePtr->__data, tempNodePtr->__data);
+        our::swap(toDeletePtr->getData(), tempNodePtr->getData());
         // think of better solution
     }
     Node_pointer parentOfToDelete = toDeletePtr->__parent;
@@ -627,12 +648,25 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
         }
         temp = temp->__parent;
     }
-    __size--;
+    __size--;    
+    if (!isEmpty())
+    {
+        __min_element_ptr = __root.get();
+        while (__min_element_ptr->__left.get())
+        {
+            __min_element_ptr = __min_element_ptr->__left.get();
+        }
+        __max_element_ptr = __root.get();
+        while (__max_element_ptr->__left.get())
+        {
+            __max_element_ptr = __max_element_ptr->__left.get();
+        }  
+    }
     return true;
 }
 
 #ifdef TESTING
-template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
 void AVLTree<DATA_TYPE, compFunction>::print() const
 {
     std::cout << std::endl;
@@ -645,8 +679,8 @@ void AVLTree<DATA_TYPE, compFunction>::print() const
     std::cout << std::endl;
 }
 
-template <typename DATA_TYPE, Comparison(*compFunction)(const DATA_TYPE&, const DATA_TYPE&)>
-void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer& node_ptr, int level) const
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer &node_ptr, int level) const
 {
     if (node_ptr == nullptr)
     {
@@ -661,7 +695,7 @@ void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer& node_ptr, i
         std::cout << " ";
     }
 
-    std::cout << "+--" << node_ptr->__data << std::endl;
+    std::cout << "+--" << node_ptr->getData() << std::endl;
 
     printNode(node_ptr->__left.get(), level + 1);
 }
