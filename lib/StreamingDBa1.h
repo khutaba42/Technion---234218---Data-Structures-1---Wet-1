@@ -17,12 +17,12 @@
 
 #include "wet1util.h"
 #include "includes.h"
-
 class streaming_database {
 private:
-	AVLTree<Movie> __movies;
-	AVLTree<User> __users;
-	AVLTree<GroupWatch> __groups;
+	AVLTree<std::shared_ptr<Movie>, CompareMovies_By_ID> __movies_By_ID[(unsigned long) Genre::NONE + 1];
+	AVLTree<std::shared_ptr<Movie>, compareMovies_By_Rating_Views_reversedID> __movies_By_Rating_Views_reversedID[(unsigned long) Genre::NONE];
+	AVLTree<std::shared_ptr<User>, CompareUsers_By_ID> __users;
+	AVLTree<std::shared_ptr<GroupWatch>, CompareGroups_By_ID> __groups;
 
 public:
 	// <DO-NOT-MODIFY> {
