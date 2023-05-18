@@ -20,7 +20,7 @@ enum class Comparison
 };
 
 template <typename T>
-Comparison NormalCompare(const T &left, const T &right)
+Comparison AVLTree_CompareUsingOperators(const T &left, const T &right)
 {
     if (left < right)
         return Comparison::less;
@@ -30,14 +30,9 @@ Comparison NormalCompare(const T &left, const T &right)
         return Comparison::equal;
 }
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &) = NormalCompare<DATA_TYPE>>
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &) = AVLTree_CompareUsingOperators<DATA_TYPE>>
 class AVLTree
 {
-private:
-    struct Node;
-    using Node_pointer = Node *;
-    using Node_unique_ptr = std::unique_ptr<Node>;
-
 public:
     // error classes
 
@@ -51,81 +46,52 @@ public:
         const char *what() const noexcept override { return "Element already exists"; }
     };
 
-    AVLTree() : __root(nullptr), __size(0), __min_element_ptr(nullptr), __max_element_ptr(nullptr) {}
+    // methods
+
+    AVLTree();
     ~AVLTree() = default;
-    AVLTree(const AVLTree &src) : __root(nullptr), __size(src.__size)
-    {
-        if (!src.isEmpty())
-        {
-            __root.reset(new Node(*(src.__root)));
-        }
-    }
+    AVLTree(const AVLTree &src);
 
-    AVLTree &operator=(const AVLTree &src)
-    {
-        if (&src != this)
-        {
-            if (!src.isEmpty())
-            {
-                __root.reset(new Node(*(src.__root)));
-            }
-            __size = src.__size;
-        }
-        return *this;
-    }
-
-    inline void clear()
-    {
-        __root.reset();
-        __size = 0;
-    }
-
-    inline bool isEmpty() const { return __root.get() == nullptr; }
-
-    inline int height() const { return __root->__height; }
-
-    inline int getSize() const { return __size; }
-
+    AVLTree &operator=(const AVLTree &src);
+    void clear();
+    bool isEmpty() const;
+    int height() const;
+    int getSize() const;
     bool insert(const DATA_TYPE &data);
     bool remove(const DATA_TYPE &data);
-
-    const DATA_TYPE& getMax() const {return __max_element_ptr->getData();}
-    const DATA_TYPE& getMin() const {return __min_element_ptr->getData();}
-    const DATA_TYPE &find(const DATA_TYPE &data) const
-    {
-        Node_pointer tempNodePtr = __root.get();
-        while (!tempNodePtr)
-        {
-            Comparison result = compFunction(tempNodePtr->getData(), data);
-            if (result == Comparison::equal)
-            {
-                return tempNodePtr->getData();
-            }
-            else if (result == Comparison::greater)
-            {
-                tempNodePtr = tempNodePtr->__left.get();
-            }
-            else if (result == Comparison::less)
-            {
-                tempNodePtr = tempNodePtr->__right.get();
-            }
-        }
-        throw NoSuchElementException();
-    }
-
-#ifdef TESTING
-
-    void print() const;
-
-    void printNode(const Node_pointer &node_ptr, int depth) const;
-
-#endif
+    DATA_TYPE &find(const DATA_TYPE &data);
+    const DATA_TYPE &getMax() const;
+    const DATA_TYPE &getMin() const;
 
 private:
+    struct Node;
+    using Node_pointer = Node *;
+    using Node_unique_ptr = std::unique_ptr<Node>;
+
     Node_unique_ptr __root;
     int __size;
     Node_pointer __min_element_ptr;
     Node_pointer __max_element_ptr;
+
+    /* Helper Functions
+    bool rotateLeft(Node_unique_ptr &node_ptr);
+    bool rotateRight(Node_unique_ptr &node_ptr);
+    Node_unique_ptr &getUniquePtr(const Node &node);
+    bool swapWithLeftChild(Node_unique_ptr &node_ptr);
+    bool swapWithRightChild(Node_unique_ptr &node_ptr);
+    void swapData(Node_unique_ptr &first, Node_unique_ptr &second);
+    void swap(Node_unique_ptr &first, Node_unique_ptr &second);
+    */
+
+#ifdef TESTING
+public:
+    void print() const;
+
+private:
+    void printNode(const Node_pointer &node_ptr, int depth) const;
+
+#endif
+
     struct Node
     {
         DATA_TYPE __data;
@@ -135,7 +101,9 @@ private:
         int __height;
 
         Node(const DATA_TYPE &data) : __parent(nullptr), __data(data), __left(nullptr), __right(nullptr), __height(0) {}
+
         ~Node() = default;
+
         Node(const Node &src) : __parent(nullptr), __data(src.getData()), __left(nullptr), __right(nullptr), __height(src.__height)
         {
             if (src.hasLeft())
@@ -147,8 +115,10 @@ private:
                 setRight(src.__right->getData());
             }
         }
-        inline DATA_TYPE &getData() { return __data; }
-        void setLeft(const DATA_TYPE &data) // adds only one node to the left
+
+        DATA_TYPE &getData() { return __data; }
+
+        void setLeft(const DATA_TYPE &data)
         {
             __left.reset(new Node(data));
             __left->__parent = this;
@@ -172,20 +142,55 @@ private:
             }
         }
 
-        inline void recalculateHeight() { __height = 1 + our::max((hasLeft()) ? (__left->__height) : (-1), (hasRight()) ? (__right->__height) : (-1)); }
-        inline bool isLeaf() const { return ((__left == nullptr) && (__right == nullptr)); }
-        inline bool isRoot() const { return (__parent == nullptr); }
-        inline bool hasLeft() const { return (!(__left == nullptr)); }
-        inline bool hasRight() const { return (!(__right == nullptr)); }
+        void recalculateHeight()
+        {
+            __height = 1 + our::max((hasLeft()) ? (__left->__height) : (-1), (hasRight()) ? (__right->__height) : (-1));
+        }
 
-        inline int balanceFactor() const { return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height)
-                                                                                                     : (-1)); }
-        inline bool isAVLBalanced() const { return our::abs(balanceFactor()) <= 1; }
+        bool isLeaf() const
+        {
+            return ((__left == nullptr) && (__right == nullptr));
+        }
+
+        bool isRoot() const
+        {
+            return (__parent == nullptr);
+        }
+
+        bool hasLeft() const
+        {
+            return (!(__left == nullptr));
+        }
+
+        bool hasRight() const
+        {
+            return (!(__right == nullptr));
+        }
+
+        int balanceFactor() const
+        {
+            return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height) : (-1));
+        }
+
+        bool isAVLBalanced() const
+        {
+            return our::abs(balanceFactor()) <= 1;
+        }
     };
 
-
-    // helper functions
-
+    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+       +---------------------------------------------------------------+
+       |                                                               |
+       |        AVLTree Helper Functions Implementations               |
+       |                                                               |
+       +---------------------------------------------------------------+
+    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
     /**
      * @brief takes in a pointer for the node to be rotated to the left
      *
@@ -448,6 +453,94 @@ private:
     }
 };
 
+/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                    AVLTree Implementations                    |
+   |                                                               |
+   +---------------------------------------------------------------+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+AVLTree<DATA_TYPE, compFunction>::AVLTree() : __root(nullptr), __size(0),
+                                              __min_element_ptr(nullptr),
+                                              __max_element_ptr(nullptr)
+{
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+AVLTree<DATA_TYPE, compFunction>::AVLTree(const AVLTree &src) : __root(nullptr), __size(src.__size)
+{
+    if (!src.isEmpty())
+    {
+        __root.reset(new Node(*(src.__root)));
+    }
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+AVLTree<DATA_TYPE, compFunction> &AVLTree<DATA_TYPE, compFunction>::operator=(const AVLTree &src)
+{
+    if (&src != this)
+    {
+        if (!src.isEmpty())
+        {
+            __root.reset(new Node(*(src.__root)));
+        }
+        __size = src.__size;
+    }
+    return *this;
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+void AVLTree<DATA_TYPE, compFunction>::clear()
+{
+    __root.reset();
+    __size = 0;
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+bool AVLTree<DATA_TYPE, compFunction>::isEmpty() const
+{
+    return __root.get() == nullptr;
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+int AVLTree<DATA_TYPE, compFunction>::height() const
+{
+    return __root->__height;
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+int AVLTree<DATA_TYPE, compFunction>::getSize() const
+{
+    return __size;
+}
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+const DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::getMax() const
+{
+    if (__max_element_ptr == nullptr)
+    {
+        throw NoSuchElementException();
+    }
+    return __max_element_ptr->getData();
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+const DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::getMin() const
+{
+    if (__min_element_ptr == nullptr)
+    {
+        throw NoSuchElementException();
+    }
+    return __min_element_ptr->getData();
+}
+
 template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
 bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
 {
@@ -544,11 +637,11 @@ bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
     {
         __min_element_ptr = __min_element_ptr->__left.get();
     }
-     __max_element_ptr = __root.get();
-    while (__max_element_ptr->__left.get())
+    __max_element_ptr = __root.get();
+    while (__max_element_ptr->__right.get())
     {
-        __max_element_ptr = __max_element_ptr->__left.get();
-    }   
+        __max_element_ptr = __max_element_ptr->__right.get();
+    }
 
     return true;
 }
@@ -648,7 +741,7 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
         }
         temp = temp->__parent;
     }
-    __size--;    
+    __size--;
     if (!isEmpty())
     {
         __min_element_ptr = __root.get();
@@ -657,12 +750,35 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
             __min_element_ptr = __min_element_ptr->__left.get();
         }
         __max_element_ptr = __root.get();
-        while (__max_element_ptr->__left.get())
+        while (__max_element_ptr->__right.get())
         {
-            __max_element_ptr = __max_element_ptr->__left.get();
-        }  
+            __max_element_ptr = __max_element_ptr->__right.get();
+        }
     }
     return true;
+}
+
+template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
+DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::find(const DATA_TYPE &data)
+{
+    Node_pointer tempNodePtr = __root.get();
+    while (!tempNodePtr)
+    {
+        Comparison result = compFunction(tempNodePtr->getData(), data);
+        if (result == Comparison::equal)
+        {
+            return tempNodePtr->getData();
+        }
+        else if (result == Comparison::greater)
+        {
+            tempNodePtr = tempNodePtr->__left.get();
+        }
+        else if (result == Comparison::less)
+        {
+            tempNodePtr = tempNodePtr->__right.get();
+        }
+    }
+    throw NoSuchElementException();
 }
 
 #ifdef TESTING
