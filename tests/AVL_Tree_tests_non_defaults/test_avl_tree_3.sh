@@ -1,6 +1,6 @@
 # write atester.sh in the terminal to run the test
 
-for i in {1..20}
+for i in {1..2}
 do
   echo "\n"
 done
