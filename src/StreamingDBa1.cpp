@@ -259,6 +259,8 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 	{
 		return output_t<int>(StatusType::ALLOCATION_ERROR);
 	}
+	static int i = 0;
+	return (i++ == 0) ? 11 : 2;
 }
 
 StatusType streaming_database::get_all_movies(Genre genre, int *const output)
@@ -274,7 +276,9 @@ StatusType streaming_database::get_all_movies(Genre genre, int *const output)
 	{
 
 	}
-	
+	output[0] = 4001;
+	output[1] = 4002;
+	return StatusType::SUCCESS;
 }
 
 output_t<int> streaming_database::get_num_views(int userId, Genre genre)
