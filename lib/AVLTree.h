@@ -63,6 +63,11 @@ public:
     const DATA_TYPE &getMax() const;
     const DATA_TYPE &getMin() const;
 
+    template<typename FunctionObject>
+    void in_order_traversal(FunctionObject do_something) const {
+        in_order_traversal_aux_recursive(__root.get(), do_something);
+    }
+
 private:
     struct Node;
     using Node_pointer = Node *;
@@ -81,6 +86,8 @@ private:
     bool swapWithRightChild(Node_unique_ptr &node_ptr);
     void swapData(Node_unique_ptr &first, Node_unique_ptr &second);
     void swap(Node_unique_ptr &first, Node_unique_ptr &second);
+    template<FunctionObject do_something>
+    void in_order_traversal_aux() const;
     */
 
 #ifdef TESTING
@@ -117,6 +124,14 @@ private:
         }
 
         DATA_TYPE &getData() { return __data; }
+
+        Node_pointer getLeftPointer() const{
+            return __left.get();
+        }
+
+        Node_pointer getRightPointer() const{
+            return __right.get();
+        }
 
         void setLeft(const DATA_TYPE &data)
         {
@@ -291,7 +306,7 @@ private:
     {
         if (node.isRoot())
             return __root;
-        if (node.__parent->__left.get() == &node)
+        if (node.__parent->getLeftPointer() == &node)
         {
             return node.__parent->__left;
         }
@@ -425,19 +440,19 @@ private:
     {
         if (first.get() != second.get()) // don't really need to check for self swap
         {
-            if (first->__right.get() == second.get())
+            if (first->getRightPointer() == second.get())
             {
                 swapWithRightChild(first);
             }
-            if (first->__left.get() == second.get())
+            if (first->getLeftPointer() == second.get())
             {
                 swapWithLeftChild(first);
             }
-            else if (second->__right.get() == first.get())
+            else if (second->getRightPointer() == first.get())
             {
                 swapWithRightChild(second);
             }
-            else if (second->__left.get() == first.get())
+            else if (second->getLeftPointer() == first.get())
             {
                 swapWithLeftChild(second);
             }
@@ -450,6 +465,19 @@ private:
                 our::swap(first->__height, second->__height);
             }
         }
+    }
+    
+    
+    template<typename FunctionObject>
+    bool in_order_traversal_aux_recursive(Node_pointer root, FunctionObject do_something) const {
+        if (root == nullptr)
+        {
+            return false;
+        }
+        in_order_traversal_aux_recursive(root->getLeftPointer(), do_something);
+        do_something(root->getData());
+        in_order_traversal_aux_recursive(root->getRightPointer(), do_something);
+        return true;
     }
 };
 
@@ -561,11 +589,11 @@ bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
         }
         else if (result == Comparison::greater)
         {
-            tempNodePtr = tempNodePtr->__left.get();
+            tempNodePtr = tempNodePtr->getLeftPointer();
         }
         else if (result == Comparison::less)
         {
-            tempNodePtr = tempNodePtr->__right.get();
+            tempNodePtr = tempNodePtr->getRightPointer();
         }
     }
     // check where to go at the leaf
@@ -633,14 +661,14 @@ bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
     }
     __size++;
     __min_element_ptr = __root.get();
-    while (__min_element_ptr->__left.get())
+    while (__min_element_ptr->getLeftPointer())
     {
-        __min_element_ptr = __min_element_ptr->__left.get();
+        __min_element_ptr = __min_element_ptr->getLeftPointer();
     }
     __max_element_ptr = __root.get();
-    while (__max_element_ptr->__right.get())
+    while (__max_element_ptr->getRightPointer())
     {
-        __max_element_ptr = __max_element_ptr->__right.get();
+        __max_element_ptr = __max_element_ptr->getRightPointer();
     }
 
     return true;
@@ -659,11 +687,11 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
         }
         else if (result == Comparison::greater)
         {
-            tempNodePtr = tempNodePtr->__left.get();
+            tempNodePtr = tempNodePtr->getLeftPointer();
         }
         else if (result == Comparison::less)
         {
-            tempNodePtr = tempNodePtr->__right.get();
+            tempNodePtr = tempNodePtr->getRightPointer();
         }
     }
     if (tempNodePtr == nullptr)
@@ -676,10 +704,10 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
     bool hasRight = toDeletePtr->hasRight();
     if (hasLeft && hasRight)
     {
-        toDeletePtr = toDeletePtr->__right.get();
+        toDeletePtr = toDeletePtr->getRightPointer();
         while (toDeletePtr->hasLeft())
         {
-            toDeletePtr = toDeletePtr->__left.get();
+            toDeletePtr = toDeletePtr->getLeftPointer();
         }
         our::swap(toDeletePtr->getData(), tempNodePtr->getData());
         // think of better solution
@@ -745,14 +773,14 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
     if (!isEmpty())
     {
         __min_element_ptr = __root.get();
-        while (__min_element_ptr->__left.get())
+        while (__min_element_ptr->getLeftPointer())
         {
-            __min_element_ptr = __min_element_ptr->__left.get();
+            __min_element_ptr = __min_element_ptr->getLeftPointer();
         }
         __max_element_ptr = __root.get();
-        while (__max_element_ptr->__right.get())
+        while (__max_element_ptr->getRightPointer())
         {
-            __max_element_ptr = __max_element_ptr->__right.get();
+            __max_element_ptr = __max_element_ptr->getRightPointer();
         }
     }
     return true;
@@ -771,11 +799,11 @@ DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::find(const DATA_TYPE &data)
         }
         else if (result == Comparison::greater)
         {
-            tempNodePtr = tempNodePtr->__left.get();
+            tempNodePtr = tempNodePtr->getLeftPointer();
         }
         else if (result == Comparison::less)
         {
-            tempNodePtr = tempNodePtr->__right.get();
+            tempNodePtr = tempNodePtr->getRightPointer();
         }
     }
     throw NoSuchElementException();
@@ -803,7 +831,7 @@ void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer &node_ptr, i
         return;
     }
 
-    printNode(node_ptr->__right.get(), level + 1);
+    printNode(node_ptr->getRightPointer(), level + 1);
 
     // Print indentation based on level
     for (int i = 0; i < level * 4; i++)
@@ -813,7 +841,7 @@ void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer &node_ptr, i
 
     std::cout << "+--" << node_ptr->getData() << std::endl;
 
-    printNode(node_ptr->__left.get(), level + 1);
+    printNode(node_ptr->getLeftPointer(), level + 1);
 }
 
 #endif
