@@ -187,6 +187,9 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
 		std::shared_ptr<Movie> movie = __movies_By_ID[(unsigned long)Genre::NONE].find(tempMovie);
 
+		if (movie->isVIPOnly() && !user->isVIP())
+			return StatusType::FAILURE;
+
 		user->watch(movie->getGenre());
 		movie->user_watch();
 		// now we need to update the trees
@@ -221,8 +224,14 @@ StatusType streaming_database::group_watch(int groupId, int movieId)
 		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(groupId));
 		std::shared_ptr<GroupWatch> group = __groups.find(tempGroup);
 
+		if (group->isEmpty())
+			return StatusType::FAILURE;
+
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
 		std::shared_ptr<Movie> movie = __movies_By_ID[(unsigned long)Genre::NONE].find(tempMovie);
+
+		if (movie->isVIPOnly() && !group->isVIP())
+			return StatusType::FAILURE;
 
 		group->watch(movie->getGenre());
 		movie->group_watch(*group);
@@ -253,11 +262,11 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 {
 	try
 	{
-		return output_t<int>(__movies_By_ID[(unsigned long)genre].getSize());
+		return __movies_By_ID[(unsigned long)genre].getSize();
 	}
-	catch(const std::bad_alloc& e)
+	catch (const std::bad_alloc &e)
 	{
-		return output_t<int>(StatusType::ALLOCATION_ERROR);
+		return StatusType::ALLOCATION_ERROR;
 	}
 	static int i = 0;
 	return (i++ == 0) ? 11 : 2;
@@ -265,37 +274,112 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 
 StatusType streaming_database::get_all_movies(Genre genre, int *const output)
 {
-	if(output == nullptr)
+	if (output == nullptr)
 		return StatusType::INVALID_INPUT;
-	
+
+	if (get_all_movies_count(genre).ans() == 0)
+		return StatusType::FAILURE;
+
 	try
 	{
-		// we need a function to raverce the avl tree
+		our::storeID storeid(output);
+		__movies_By_Rating_Views_reversedID[(unsigned long)genre].in_order_traversal(storeid);
 	}
-	catch(const std::bad_alloc& e)
+	catch (const std::bad_alloc &e)
 	{
-
+		return StatusType::ALLOCATION_ERROR;
 	}
-	output[0] = 4001;
+	/*
+	output[0] = 4001;	wtf are these for??
 	output[1] = 4002;
+	*/
 	return StatusType::SUCCESS;
 }
 
 output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 {
-	// TODO: Your code goes here
+	if (userId <= 0)
+		return StatusType::INVALID_INPUT;
+	try
+	{
+		std::shared_ptr<User> tempUser(new User(userId));
+		std::shared_ptr<User> user = __users.find(tempUser);
+
+		return user->getNumOfViews(genre);
+	}
+	catch (const std::bad_alloc &e)
+	{
+		return StatusType::ALLOCATION_ERROR;
+	}
+	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	{
+		return StatusType::FAILURE;
+	}
+
 	return 2008;
 }
 
 StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 {
-	// TODO: Your code goes here
+	if (userId <= 0 || movieId <= 0 || rating < 0 || rating > 100)
+		return StatusType::INVALID_INPUT;
+
+	try
+	{
+		std::shared_ptr<User> tempUser(new User(userId));
+		std::shared_ptr<User> user = __users.find(tempUser);
+
+		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
+		std::shared_ptr<Movie> movie = __movies_By_ID[(unsigned long)Genre::NONE].find(tempMovie);
+
+		if (movie->isVIPOnly() && !user->isVIP())
+			return StatusType::FAILURE;
+
+		movie->rate(rating);
+	}
+	catch (const std::bad_alloc &e)
+	{
+		return StatusType::ALLOCATION_ERROR;
+	}
+	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	{
+		return StatusType::FAILURE;
+	}
+	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
+	{
+		return StatusType::FAILURE;
+	}
+
 	return StatusType::SUCCESS;
 }
 
 output_t<int> streaming_database::get_group_recommendation(int groupId)
 {
-	// TODO: Your code goes here
+	if (groupId <= 0)
+		return StatusType::INVALID_INPUT;
+
+	try
+	{
+		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(groupId));
+		std::shared_ptr<GroupWatch> group = __groups.find(tempGroup);
+
+		if (group->isEmpty())
+			return StatusType::FAILURE;
+
+		Genre favGenre = group->getFavGenre();
+		if (__movies_By_ID[(unsigned long)favGenre].isEmpty())
+			return StatusType::FAILURE;
+
+		return __movies_By_Rating_Views_reversedID[(unsigned long)favGenre].getMax()->getID(); // this isn't true,  we need to return (in case of double equality) the movie with the lesser ID
+	}
+	catch (const std::bad_alloc &e)
+	{
+		return StatusType::ALLOCATION_ERROR;
+	}
+	catch (const AVLTree<std::shared_ptr<GroupWatch>>::NoSuchElementException &)
+	{
+		return StatusType::FAILURE;
+	}
 	static int i = 0;
 	return (i++ == 0) ? 11 : 2;
 }
