@@ -1,6 +1,15 @@
 
+// #include "includes.h" made include problems
+#include "wet1util.h"
 
-#include "includes.h"
+#include "AVLTree.h"
+
+#include <memory>
+#include "Movie.h"
+#include "GroupWatch.h"
+#include "User.h"
+
+#include <exception>
 
 Comparison compareMovies_By_Rating_Views_reversedID(const std::shared_ptr<Movie> &left, const std::shared_ptr<Movie> &right)
 {

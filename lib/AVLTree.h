@@ -88,7 +88,7 @@ private:
     void swapData(Node_unique_ptr &first, Node_unique_ptr &second);
     void swap(Node_unique_ptr &first, Node_unique_ptr &second);
     template<FunctionObject do_something>
-    void in_order_traversal_aux() const;
+    bool in_order_traversal_aux() const;
     */
 
 #ifdef TESTING

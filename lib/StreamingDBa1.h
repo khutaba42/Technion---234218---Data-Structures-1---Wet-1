@@ -16,10 +16,18 @@
 #define STREAMINGDBA1_H_
 
 #include "wet1util.h"
+#include <memory>
 #include "includes.h"
 class streaming_database {
 private:
+	/* 	these trees holds in a shared pointer to all the movies and they are ordered by ID
+		we have 5 trees the first 4 are genre specific and the last holds in ALL the movies */
 	AVLTree<std::shared_ptr<Movie>, CompareMovies_By_ID> __movies_By_ID[(unsigned long) Genre::NONE + 1];
+	/* 	these trees holds in a shared pointer to all the movies and they are ordered by:
+			Rating 	- from low  to high
+			Views 	- from low  to high
+			ID 		- from high to low
+		we have 5 trees the first 4 are genre specific and the last holds in ALL the movies */
 	AVLTree<std::shared_ptr<Movie>, compareMovies_By_Rating_Views_reversedID> __movies_By_Rating_Views_reversedID[(unsigned long) Genre::NONE + 1];
 	AVLTree<std::shared_ptr<User>, CompareUsers_By_ID> __users;
 	AVLTree<std::shared_ptr<GroupWatch>, CompareGroups_By_ID> __groups;
