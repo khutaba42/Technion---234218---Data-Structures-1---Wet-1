@@ -23,12 +23,22 @@ public:
     {
         return __rating;
     }
+
     int getViews() const
     {
         return __numOfViews;
     }
+
     Genre getGenre() const{
         return __genre;
+    }
+
+    int getID() const{
+        return __id;
+    }
+
+    bool isVIPOnly() const {
+        return __vipOnly;
     }
 
     void user_watch()

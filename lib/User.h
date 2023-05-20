@@ -7,7 +7,7 @@
 class User
 {
 public:
-    // error classes 
+    // error classes
 
     class UserAlreadyInGroupException : public std::exception
     {
@@ -15,21 +15,29 @@ public:
     };
 
     User(int id, bool vip = false) : __id(id),
-                    __vip(vip),
-                   __soloViews{0},
-                   __groupViewsWhenJoined{0},
-                   __group(nullptr)
+                                     __vip(vip),
+                                     __soloViews{0},
+                                     __groupViewsWhenJoined{0},
+                                     __group(nullptr)
     {
     }
     ~User() = default;
     User(const User &) = delete;
     User &operator=(const User &) = delete;
 
-    bool isInGroup() const { return (__group != nullptr); }
-
-    void getInGroup(GroupWatch* group)
+    bool isInGroup() const
     {
-        if(isInGroup())
+        return (__group != nullptr);
+    }
+
+    bool isVIP() const
+    {
+        return __vip;
+    }
+
+    void getInGroup(GroupWatch *group)
+    {
+        if (isInGroup())
         {
             throw UserAlreadyInGroupException();
         }
@@ -43,7 +51,7 @@ public:
 
     void removeUserFromGroup()
     {
-        if(!isInGroup())
+        if (!isInGroup())
             return;
         for (short i = 0; i < (unsigned long)Genre::NONE; i++)
         {
@@ -67,7 +75,7 @@ public:
 
     void watch(Genre genre)
     {
-        if(genre == Genre::NONE)
+        if (genre == Genre::NONE)
             return;
         __soloViews[(unsigned long)genre]++;
         __soloViews[(unsigned long)Genre::NONE]++;

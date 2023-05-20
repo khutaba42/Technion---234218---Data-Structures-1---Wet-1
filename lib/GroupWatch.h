@@ -7,19 +7,20 @@ class GroupWatch
 {
 public:
     GroupWatch(int id) : __id(id),
+                         __vip(false),
                          __groupViews{0},
                          __allViews{0},
                          __numOfUsers(0)
     {
     }
     ~GroupWatch() = default;
-    GroupWatch(const GroupWatch&) = delete;
-    GroupWatch& operator=(const GroupWatch&) = delete;
+    GroupWatch(const GroupWatch &) = delete;
+    GroupWatch &operator=(const GroupWatch &) = delete;
 
     /**
-     * 
+     *
      * @throw User::UserAlreadyInGroupException
-    */
+     */
     void addUser(std::shared_ptr<User> user)
     {
         user->getInGroup(this);
@@ -28,6 +29,18 @@ public:
             addViews((Genre)i, user->getNumOfViews((Genre)i));
         }
         __users.insert(user);
+        if (!__vip)
+            __vip = user->isVIP();
+    }
+
+    bool isVIP() const
+    {
+        return __vip;
+    }
+
+    bool isEmpty()
+    {
+        return __users.isEmpty();
     }
 
     void removeUser(std::shared_ptr<User> user)
@@ -40,6 +53,18 @@ public:
         return __numOfUsers;
     }
 
+    Genre getFavGenre() const
+    {
+        int favGenre = 0, favGenreViews = 0;
+
+        for (int i = 0; i < (unsigned long)Genre::NONE; i++)
+        {
+            if (__allViews[i] > favGenreViews)
+                favGenre = i;
+        }
+        return (Genre)favGenre;
+    }
+
     void addViews(Genre genre, int amount)
     {
         __allViews[(unsigned long)genre] += amount;
@@ -47,7 +72,7 @@ public:
 
     void watch(Genre genre)
     {
-        if(genre == Genre::NONE)
+        if (genre == Genre::NONE)
             return;
         __groupViews[(unsigned long)genre]++;
         __allViews[(unsigned long)genre]++;
@@ -76,10 +101,11 @@ public:
 
 private:
     int __id;
+    bool __vip;
     int __groupViews[(unsigned long)Genre::NONE + 1];
     int __allViews[(unsigned long)Genre::NONE];
     int __numOfUsers;
-    AVLTree<std::shared_ptr<User>, CompareUsers_By_ID> __users;//define a new class called our shared_ptr
+    AVLTree<std::shared_ptr<User>, CompareUsers_By_ID> __users; // define a new class called our shared_ptr
 };
 
 #endif // _GROUP_WATCH_H_
