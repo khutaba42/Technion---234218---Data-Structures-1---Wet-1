@@ -63,8 +63,9 @@ public:
     const DATA_TYPE &getMax() const;
     const DATA_TYPE &getMin() const;
 
-    template<typename FunctionObject>
-    void in_order_traversal(FunctionObject do_something) const {
+    template <typename FunctionObject>
+    void in_order_traversal(FunctionObject do_something) const
+    {
         in_order_traversal_aux_recursive(__root.get(), do_something);
     }
 
@@ -123,13 +124,18 @@ private:
             }
         }
 
-        DATA_TYPE &getData() { return __data; }
+        DATA_TYPE &getData()
+        {
+            return __data;
+        }
 
-        Node_pointer getLeftPointer() const{
+        Node_pointer getLeftPointer() const
+        {
             return __left.get();
         }
 
-        Node_pointer getRightPointer() const{
+        Node_pointer getRightPointer() const
+        {
             return __right.get();
         }
 
@@ -466,10 +472,10 @@ private:
             }
         }
     }
-    
-    
-    template<typename FunctionObject>
-    bool in_order_traversal_aux_recursive(Node_pointer root, FunctionObject do_something) const {
+
+    template <typename FunctionObject>
+    bool in_order_traversal_aux_recursive(Node_pointer root, FunctionObject do_something) const
+    {
         if (root == nullptr)
         {
             return false;
