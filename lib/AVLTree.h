@@ -543,10 +543,14 @@ private:
             }
             else if (result == Comparison::greater)
             {
+                if(tempNodePtr->getLeftPointer() == nullptr)
+                    break;
                 tempNodePtr = tempNodePtr->getLeftPointer();
             }
             else if (result == Comparison::less)
             {
+                if(tempNodePtr->getRightPointer() == nullptr)
+                    break;
                 tempNodePtr = tempNodePtr->getRightPointer();
             }
         }
@@ -795,7 +799,6 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
             {
                 if (temp->__left->balanceFactor() >= 0) // LL rotation
                 {
-                    // rotateLeft(temp->__left);
                     rotateLeft(getUniquePtr(*temp));
                 }
                 else // balanceFactor == -1, LR rotation
@@ -808,7 +811,6 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
             {
                 if (temp->__right->balanceFactor() <= 0) // RR rotation
                 {
-                    // rotateRight(temp->__right);
                     rotateRight(getUniquePtr(*temp));
                 }
                 else // balanceFactor == 1, RL rotation
