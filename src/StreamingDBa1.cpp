@@ -44,7 +44,7 @@ StatusType streaming_database::add_movie(int movieId, Genre genre, int views, bo
 		std::shared_ptr<Movie> movie(new Movie(movieId, genre, views, vipOnly));
 		__movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
 		__movies_ordered_by_ID[static_cast<unsigned long>(genre)].insert(movie);
-		/** @warning dont think we need it __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);*/
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].insert(movie);
 	}
 	catch (std::bad_alloc &)
@@ -75,7 +75,7 @@ StatusType streaming_database::remove_movie(int movieId)
 		std::shared_ptr<Movie> toDelete = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(temp);
 		__movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);
 		__movies_ordered_by_ID[static_cast<unsigned long>(toDelete->getGenre())].remove(toDelete);
-		/** @warning dont think we need it __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);*/
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(toDelete->getGenre())].remove(toDelete);
 	}
 	/** @warning no need to as said in piazza
@@ -358,8 +358,6 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	static int i = 0;
-	return (i++ == 0) ? 11 : 2;
 }
 
 /**
@@ -392,8 +390,6 @@ StatusType streaming_database::get_all_movies(Genre genre, int *const output)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	output[0] = 4001;
-	output[1] = 4002;
 	return StatusType::SUCCESS;
 }
 
@@ -412,19 +408,12 @@ output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 	{
 		std::shared_ptr<User> tempUser(new User(userId));
 		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
-
 		return user->getNumOfViews(genre);
 	}
-	catch (const std::bad_alloc &e)
-	{
-		return StatusType::ALLOCATION_ERROR;
-	}
-	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
-
-	return 2008;
 }
 
 /**
@@ -502,6 +491,4 @@ output_t<int> streaming_database::get_group_recommendation(int groupId)
 	{
 		return StatusType::FAILURE;
 	}
-	static int i = 0;
-	return (i++ == 0) ? 11 : 2;
 }
