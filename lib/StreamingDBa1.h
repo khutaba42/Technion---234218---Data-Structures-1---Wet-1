@@ -44,7 +44,7 @@ private:
     */
     AVLTree<std::shared_ptr<Movie>,
             Compare_shared_ptr_to_movies_by_rating_views_reversedID>
-        __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)];
+        __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE) + 1];
     /**
      * @brief
     */
