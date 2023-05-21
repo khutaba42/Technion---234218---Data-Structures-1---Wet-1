@@ -22,7 +22,6 @@ void query_get_all_movies(string cmd, streaming_database *obj, Genre genre);
 
 int main()
 {
-	
     int d1, d2, d3, g1;
     string b1;
     bool b;

@@ -1,3 +1,5 @@
+#ifndef _AVL_TREE_H_
+#define _AVL_TREE_H_
 
 #include <memory>
 #include "ourUtilityFunctions.h"
@@ -9,18 +11,18 @@
 #ifdef TESTING
 // includes for testing
 #include <iostream>
-#endif
+#endif // TESTING
 
 // for comparing
 enum class Comparison
 {
-    less,
-    equal,
-    greater
+    less = 0,
+    equal = 1,
+    greater = 2
 };
 
 template <typename T>
-Comparison AVLTree_CompareUsingOperators(const T &left, const T &right)
+inline Comparison AVLTree_CompareUsingOperators(const T &left, const T &right)
 {
     if (left < right)
         return Comparison::less;
@@ -39,10 +41,12 @@ public:
     // if an element do not exists
     class NoSuchElementException : public std::exception
     {
+    public:
         const char *what() const noexcept override { return "There is no such element"; }
     };
     class ElementAlreadyExistsException : public std::exception
     {
+    public:
         const char *what() const noexcept override { return "Element already exists"; }
     };
 
@@ -57,18 +61,40 @@ public:
     bool isEmpty() const;
     int height() const;
     int getSize() const;
-    bool insert(const DATA_TYPE &data);
+    /**
+     * @return true if element inserted successfully
+     * @throw ElementAlreadyExistsException
+     * @brief
+     * @tparam
+     * Time_Complexity:
+     * @tparam
+     * Space_Complexity:
+     */
+    void insert(const DATA_TYPE &data);
+    /**
+     * @return none
+     * @throw NoSuchElementException
+     * @brief
+     * @tparam
+     * Time_Complexity:
+     * @tparam
+     * Space_Complexity:
+     */
     bool remove(const DATA_TYPE &data);
     DATA_TYPE &find(const DATA_TYPE &data);
     const DATA_TYPE &getMax() const;
     const DATA_TYPE &getMin() const;
 
     template <typename FunctionObject>
-    void in_order_traversal(FunctionObject do_something) const
+    void in_order_traversal(FunctionObject do_something) 
     {
         in_order_traversal_aux_recursive(__root.get(), do_something);
     }
-
+    template <typename FunctionObject>
+    void reverse_in_order_traversal(FunctionObject do_something) 
+    {
+        reverse_in_order_traversal_aux_recursive(__root.get(), do_something);
+    }
 private:
     struct Node;
     using Node_pointer = Node *;
@@ -98,8 +124,9 @@ public:
 private:
     void printNode(const Node_pointer &node_ptr, int depth) const;
 
-#endif
+#endif // TESTING
 
+    Node_pointer getRoot() {return __root.get();}
     struct Node
     {
         DATA_TYPE __data;
@@ -108,7 +135,7 @@ private:
         Node_unique_ptr __right;
         int __height;
 
-        Node(const DATA_TYPE &data) : __parent(nullptr), __data(data), __left(nullptr), __right(nullptr), __height(0) {}
+        Node(const DATA_TYPE &data) : __data(data),  __parent(nullptr), __left(nullptr), __right(nullptr), __height(0) {}
 
         ~Node() = default;
 
@@ -485,6 +512,109 @@ private:
         in_order_traversal_aux_recursive(root->getRightPointer(), do_something);
         return true;
     }
+
+    template <typename FunctionObject>
+    bool reverse_in_order_traversal_aux_recursive(Node_pointer root, FunctionObject do_something) const
+    {
+        if (root == nullptr)
+        {
+            return false;
+        }
+        reverse_in_order_traversal_aux_recursive(root->getRightPointer(), do_something);
+        do_something(root->getData());
+        reverse_in_order_traversal_aux_recursive(root->getLeftPointer(), do_something);
+        return true;
+    }
+
+    bool insert_aux(const DATA_TYPE &data)
+    {
+        if (isEmpty())
+        {
+            __root.reset(new Node(data));
+            return true;
+        }
+        Node_pointer tempNodePtr = __root.get();
+        while (!tempNodePtr->isLeaf())
+        {
+            Comparison result = compFunction(tempNodePtr->getData(), data);
+            if (result == Comparison::equal)
+            {
+                return false;
+            }
+            else if (result == Comparison::greater)
+            {
+                tempNodePtr = tempNodePtr->getLeftPointer();
+            }
+            else if (result == Comparison::less)
+            {
+                tempNodePtr = tempNodePtr->getRightPointer();
+            }
+        }
+        // check where to go at the leaf
+        Comparison result = compFunction(tempNodePtr->getData(), data);
+        if (result == Comparison::equal)
+        {
+            return false;
+        }
+        else if (result == Comparison::greater)
+        {
+            tempNodePtr->setLeft(data);
+        }
+        else if (result == Comparison::less)
+        {
+            tempNodePtr->setRight(data);
+        }
+        // now the new data is added
+
+        Node_pointer tempFixHeight = tempNodePtr;
+        while (tempFixHeight != nullptr)
+        {
+            tempFixHeight->recalculateHeight();
+            tempFixHeight = tempFixHeight->__parent;
+        }
+        tempFixHeight = tempNodePtr;
+
+        while ((tempNodePtr != nullptr) && (tempNodePtr->isAVLBalanced()))
+        {
+            tempNodePtr = tempNodePtr->__parent;
+        }
+
+        if (tempNodePtr != nullptr)
+        {
+            if (tempNodePtr->balanceFactor() >= 2) // left heavy
+            {
+                if (tempNodePtr->__left->balanceFactor() >= 0) // LL rotation
+                {
+                    // rotateLeft(tempNodePtr->__left);
+                    rotateLeft(getUniquePtr(*(tempNodePtr)));
+                }
+                else // balanceFactor == -1, LR rotation
+                {
+                    rotateRight(tempNodePtr->__left);
+                    rotateLeft(getUniquePtr(*(tempNodePtr)));
+                }
+            }
+            if (tempNodePtr->balanceFactor() <= -2) // right heavy
+            {
+                if (tempNodePtr->__right->balanceFactor() <= 0) // RR rotation
+                {
+                    // rotateRight(tempNodePtr->__right);
+                    rotateRight(getUniquePtr(*(tempNodePtr)));
+                }
+                else // balanceFactor == 1, RL rotation
+                {
+                    rotateLeft(tempNodePtr->__right);
+                    rotateRight(getUniquePtr(*(tempNodePtr)));
+                }
+            }
+        }
+        while (tempFixHeight != nullptr)
+        {
+            tempFixHeight->recalculateHeight();
+            tempFixHeight = tempFixHeight->__parent;
+        }
+        return true;
+    }
 };
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -576,94 +706,11 @@ const DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::getMin() const
 }
 
 template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
+void AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
 {
-    if (isEmpty())
+    if (!insert_aux(data)) // not added
     {
-        __root.reset(new Node(data));
-        __size++;
-        __min_element_ptr = __max_element_ptr = __root.get();
-        return true;
-    }
-    Node_pointer tempNodePtr = __root.get();
-    while (!tempNodePtr->isLeaf())
-    {
-        Comparison result = compFunction(tempNodePtr->getData(), data);
-        if (result == Comparison::equal)
-        {
-            return false;
-        }
-        else if (result == Comparison::greater)
-        {
-            tempNodePtr = tempNodePtr->getLeftPointer();
-        }
-        else if (result == Comparison::less)
-        {
-            tempNodePtr = tempNodePtr->getRightPointer();
-        }
-    }
-    // check where to go at the leaf
-    Comparison result = compFunction(tempNodePtr->getData(), data);
-    if (result == Comparison::equal)
-    {
-        return false;
-    }
-    else if (result == Comparison::greater)
-    {
-        tempNodePtr->setLeft(data);
-    }
-    else if (result == Comparison::less)
-    {
-        tempNodePtr->setRight(data);
-    }
-    // now the new data is added
-
-    Node_pointer tempFixHeight = tempNodePtr;
-    while (tempFixHeight != nullptr)
-    {
-        tempFixHeight->recalculateHeight();
-        tempFixHeight = tempFixHeight->__parent;
-    }
-    tempFixHeight = tempNodePtr;
-
-    while ((tempNodePtr != nullptr) && (tempNodePtr->isAVLBalanced()))
-    {
-        tempNodePtr = tempNodePtr->__parent;
-    }
-
-    if (tempNodePtr != nullptr)
-    {
-        if (tempNodePtr->balanceFactor() >= 2) // left heavy
-        {
-            if (tempNodePtr->__left->balanceFactor() >= 0) // LL rotation
-            {
-                // rotateLeft(tempNodePtr->__left);
-                rotateLeft(getUniquePtr(*(tempNodePtr)));
-            }
-            else // balanceFactor == -1, LR rotation
-            {
-                rotateRight(tempNodePtr->__left);
-                rotateLeft(getUniquePtr(*(tempNodePtr)));
-            }
-        }
-        if (tempNodePtr->balanceFactor() <= -2) // right heavy
-        {
-            if (tempNodePtr->__right->balanceFactor() <= 0) // RR rotation
-            {
-                // rotateRight(tempNodePtr->__right);
-                rotateRight(getUniquePtr(*(tempNodePtr)));
-            }
-            else // balanceFactor == 1, RL rotation
-            {
-                rotateLeft(tempNodePtr->__right);
-                rotateRight(getUniquePtr(*(tempNodePtr)));
-            }
-        }
-    }
-    while (tempFixHeight != nullptr)
-    {
-        tempFixHeight->recalculateHeight();
-        tempFixHeight = tempFixHeight->__parent;
+        throw ElementAlreadyExistsException();
     }
     __size++;
     __min_element_ptr = __root.get();
@@ -676,8 +723,6 @@ bool AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
     {
         __max_element_ptr = __max_element_ptr->getRightPointer();
     }
-
-    return true;
 }
 template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
 bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
@@ -795,10 +840,11 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
 template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
 DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::find(const DATA_TYPE &data)
 {
-    Node_pointer tempNodePtr = __root.get();
-    while (!tempNodePtr)
+    Node_pointer tempNodePtr = getRoot();
+    while (tempNodePtr != nullptr)
     {
-        Comparison result = compFunction(tempNodePtr->getData(), data);
+        Comparison result = Comparison::equal;
+        result = compFunction(tempNodePtr->getData(), data);
         if (result == Comparison::equal)
         {
             return tempNodePtr->getData();
@@ -850,4 +896,6 @@ void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer &node_ptr, i
     printNode(node_ptr->getLeftPointer(), level + 1);
 }
 
-#endif
+#endif // TESTING
+
+#endif // _AVL_TREE_H_

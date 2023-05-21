@@ -1,17 +1,27 @@
+#ifndef _INCLUDES_H_
+#define _INCLUDES_H_
 
-// #include "includes.h" made include problems
+
 #include "wet1util.h"
-
-#include "AVLTree.h"
-
 #include <memory>
-#include "Movie.h"
-#include "GroupWatch.h"
-#include "User.h"
+#include "AVLTree.h"
+#include "Movie_User_GroupWatch.h"
 
-#include <exception>
+/**
+ * Compare Functions for the Trees
+*/
 
-Comparison compareMovies_By_Rating_Views_reversedID(const std::shared_ptr<Movie> &left, const std::shared_ptr<Movie> &right)
+inline Comparison Compare_shared_ptr_to_movies_by_ID(const std::shared_ptr<Movie> &left, const std::shared_ptr<Movie> &right)
+{
+    if (*left < *right)
+        return Comparison::less;
+    else if (*left > *right)
+        return Comparison::greater;
+    else
+        return Comparison::equal;
+}
+
+inline Comparison Compare_shared_ptr_to_movies_by_rating_views_reversedID(const std::shared_ptr<Movie> &left, const std::shared_ptr<Movie> &right)
 {
     if (left->getRating() > right->getRating())
         return Comparison::greater;
@@ -35,7 +45,7 @@ Comparison compareMovies_By_Rating_Views_reversedID(const std::shared_ptr<Movie>
     }
 }
 
-Comparison CompareMovies_By_ID(const std::shared_ptr<Movie> &left, const std::shared_ptr<Movie> &right)
+inline Comparison Compare_shared_ptr_to_groups_by_ID(const std::shared_ptr<GroupWatch> &left, const std::shared_ptr<GroupWatch> &right)
 {
     if (*left < *right)
         return Comparison::less;
@@ -45,7 +55,7 @@ Comparison CompareMovies_By_ID(const std::shared_ptr<Movie> &left, const std::sh
         return Comparison::equal;
 }
 
-Comparison CompareUsers_By_ID(const std::shared_ptr<User> &left, const std::shared_ptr<User> &right)
+inline Comparison Compare_shared_ptr_to_users_by_ID(const std::shared_ptr<User> &left, const std::shared_ptr<User> &right)
 {
     if (*left < *right)
         return Comparison::less;
@@ -55,12 +65,4 @@ Comparison CompareUsers_By_ID(const std::shared_ptr<User> &left, const std::shar
         return Comparison::equal;
 }
 
-Comparison CompareGroups_By_ID(const std::shared_ptr<GroupWatch> &left, const std::shared_ptr<GroupWatch> &right)
-{
-    if (*left < *right)
-        return Comparison::less;
-    else if (*left > *right)
-        return Comparison::greater;
-    else
-        return Comparison::equal;
-}
+#endif // _INCLUDES_H_

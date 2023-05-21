@@ -12,7 +12,7 @@ CXX := g++
 
 # Define compiler flags: set the C++ standard, include the 'lib' directory for header files,
 # and enable all warnings
-CXXFLAGS := -I./lib -std=c++11 -Wall 
+CXXFLAGS := -I./lib -std=c++11 -Wall -v
 
 # Define linker flags (none in this case)
 LDFLAGS :=

@@ -1,15 +1,40 @@
-#include "../lib/StreamingDBa1.h"
+#include "StreamingDBa1.h"
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity: O(1)
+ * @tparam
+ * Space_Complexity: O(1)
+ */
 streaming_database::streaming_database()
 {
 	// default constructor
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity: O(max{Users, Movies, Groups}) <= O(Users + Movies + Groups)
+ * @tparam
+ * Space_Complexity: O(log(max{Users, Movies, Groups})) <= O(log(Users + Movies + Groups))
+ */
 streaming_database::~streaming_database()
 {
 	// default destructor
 }
 
+/**
+ * @brief
+ * when adding a movie we add it to 3 trees:
+ * 	-	__movies_ordered_by_ID[Genre::NONE]
+ * 	-	__movies_ordered_by_ID[Genre::genre]
+ * 	-	__movies_ordered_by_rating_views_reversedID[Genre::genre] (no NONE)
+ * @tparam
+ * Time_Complexity: O(log(Movies))
+ * @tparam
+ * Space_Complexity: O(log(Movies))
+ */
 StatusType streaming_database::add_movie(int movieId, Genre genre, int views, bool vipOnly)
 {
 	if (movieId <= 0 || genre == Genre::NONE || views < 0)
@@ -17,11 +42,10 @@ StatusType streaming_database::add_movie(int movieId, Genre genre, int views, bo
 	try
 	{
 		std::shared_ptr<Movie> movie(new Movie(movieId, genre, views, vipOnly));
-		if (!__movies_By_ID[(unsigned long)Genre::NONE].insert(movie))
-			return StatusType::FAILURE;
-		__movies_By_ID[(unsigned long)genre].insert(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)Genre::NONE].insert(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)genre].insert(movie);
+		__movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
+		__movies_ordered_by_ID[static_cast<unsigned long>(genre)].insert(movie);
+		/** @warning dont think we need it __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);*/
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].insert(movie);
 	}
 	catch (std::bad_alloc &)
 	{
@@ -34,6 +58,13 @@ StatusType streaming_database::add_movie(int movieId, Genre genre, int views, bo
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity: O(log(Movies))
+ * @tparam
+ * Space_Complexity: O(log(Movies))
+ */
 StatusType streaming_database::remove_movie(int movieId)
 {
 	if (movieId <= 0)
@@ -41,16 +72,17 @@ StatusType streaming_database::remove_movie(int movieId)
 	try
 	{
 		std::shared_ptr<Movie> temp(new Movie(movieId));
-		std::shared_ptr<Movie> toDelete = __movies_By_ID[(unsigned long)Genre::NONE].find(temp);
-		__movies_By_ID[(unsigned long)Genre::NONE].remove(toDelete);
-		__movies_By_ID[(unsigned long)toDelete->getGenre()].remove(toDelete);
-		__movies_By_Rating_Views_reversedID[(unsigned long)Genre::NONE].remove(toDelete);
-		__movies_By_Rating_Views_reversedID[(unsigned long)toDelete->getGenre()].remove(toDelete);
+		std::shared_ptr<Movie> toDelete = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(temp);
+		__movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);
+		__movies_ordered_by_ID[static_cast<unsigned long>(toDelete->getGenre())].remove(toDelete);
+		/** @warning dont think we need it __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);*/
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(toDelete->getGenre())].remove(toDelete);
 	}
+	/** @warning no need to as said in piazza
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
-	}
+	}*/
 	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
@@ -59,6 +91,13 @@ StatusType streaming_database::remove_movie(int movieId)
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::add_user(int userId, bool isVip)
 {
 	if (userId <= 0)
@@ -66,13 +105,13 @@ StatusType streaming_database::add_user(int userId, bool isVip)
 	try
 	{
 		std::shared_ptr<User> user(new User(userId, isVip));
-		__users.insert(user);
+		__users_ordered_by_ID.insert(user);
 	}
-	catch (const std::bad_alloc &e)
+	catch (const std::bad_alloc &)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>>::ElementAlreadyExistsException &)
+	catch (const AVLTree<std::shared_ptr<User>>::ElementAlreadyExistsException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -80,28 +119,46 @@ StatusType streaming_database::add_user(int userId, bool isVip)
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::remove_user(int userId)
 {
 	if (userId <= 0)
 		return StatusType::INVALID_INPUT;
 	try
 	{
+		// look for the User object using his name
 		std::shared_ptr<User> temp(new User(userId));
-		std::shared_ptr<User> toDelete = __users.find(temp);
+		// return the User object
+		std::shared_ptr<User> toDelete = __users_ordered_by_ID.find(temp);
+		// remove the user from the group he is in
 		toDelete->removeUserFromGroup();
-		__users.remove(toDelete);
+		// now we can delete the User object itself
+		__users_ordered_by_ID.remove(toDelete);
 	}
-	catch (const std::bad_alloc &e)
+	catch (const std::bad_alloc &)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity: O(log(Groups))
+ * @tparam
+ * Space_Complexity: O(log(Groups))
+ */
 StatusType streaming_database::add_group(int groupId)
 {
 	if (groupId <= 0)
@@ -109,7 +166,7 @@ StatusType streaming_database::add_group(int groupId)
 	try
 	{
 		std::shared_ptr<GroupWatch> group(new GroupWatch(groupId));
-		__groups.insert(group);
+		__groups_ordered_by_ID.insert(group);
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -122,14 +179,22 @@ StatusType streaming_database::add_group(int groupId)
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::remove_group(int groupId)
 {
 	if (groupId <= 0)
 		return StatusType::INVALID_INPUT;
 	try
 	{
+		// first we need to go through all the groupUsers and remove them form the group
 		std::shared_ptr<GroupWatch> toDelete(new GroupWatch(groupId));
-		__groups.remove(toDelete);
+		__groups_ordered_by_ID.remove(toDelete);
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -142,6 +207,13 @@ StatusType streaming_database::remove_group(int groupId)
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::add_user_to_group(int userId, int groupId)
 {
 	if (userId <= 0 || groupId <= 0)
@@ -149,18 +221,21 @@ StatusType streaming_database::add_user_to_group(int userId, int groupId)
 	try
 	{
 		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user = __users.find(tempUser);
+		std::shared_ptr<User> user(__users_ordered_by_ID.find(tempUser));
 
-		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(userId));
-		std::shared_ptr<GroupWatch> group = __groups.find(tempGroup);
+		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(groupId));
+		std::shared_ptr<GroupWatch> group = __groups_ordered_by_ID.find(tempGroup);
+
+		
 		group->addUser(user);
 	}
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &e)
 	{
+		e.what();
 		return StatusType::FAILURE;
 	}
 	catch (const AVLTree<std::shared_ptr<GroupWatch>>::NoSuchElementException &)
@@ -174,6 +249,13 @@ StatusType streaming_database::add_user_to_group(int userId, int groupId)
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::user_watch(int userId, int movieId)
 {
 	if (userId <= 0 || movieId <= 0)
@@ -182,21 +264,19 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 	try
 	{
 		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user = __users.find(tempUser);
+		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
 
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_By_ID[(unsigned long)Genre::NONE].find(tempMovie);
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(tempMovie);
 
 		if (movie->isVIPOnly() && !user->isVIP())
 			return StatusType::FAILURE;
 
 		user->watch(movie->getGenre());
-		movie->user_watch();
-		// now we need to update the trees
-		__movies_By_Rating_Views_reversedID[(unsigned long)movie->getGenre()].remove(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)movie->getGenre()].insert(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)Genre::NONE].remove(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)Genre::NONE].insert(movie);
+
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].remove(movie);
+		movie->add_views(1);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(movie);
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -210,10 +290,16 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 	{
 		return StatusType::FAILURE;
 	}
-
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::group_watch(int groupId, int movieId)
 {
 	if (groupId <= 0 || movieId <= 0)
@@ -222,25 +308,22 @@ StatusType streaming_database::group_watch(int groupId, int movieId)
 	try
 	{
 		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(groupId));
-		std::shared_ptr<GroupWatch> group = __groups.find(tempGroup);
+		std::shared_ptr<GroupWatch> group = __groups_ordered_by_ID.find(tempGroup);
 
 		if (group->isEmpty())
 			return StatusType::FAILURE;
 
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_By_ID[(unsigned long)Genre::NONE].find(tempMovie);
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(tempMovie);
 
 		if (movie->isVIPOnly() && !group->isVIP())
 			return StatusType::FAILURE;
 
 		group->watch(movie->getGenre());
-		movie->group_watch(*group);
 
-		// now we need to update the trees
-		__movies_By_Rating_Views_reversedID[(unsigned long)movie->getGenre()].remove(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)movie->getGenre()].insert(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)Genre::NONE].remove(movie);
-		__movies_By_Rating_Views_reversedID[(unsigned long)Genre::NONE].insert(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].remove(movie);
+		movie->add_views(group->getNumOfUsers());
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(movie);
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -258,11 +341,18 @@ StatusType streaming_database::group_watch(int groupId, int movieId)
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 output_t<int> streaming_database::get_all_movies_count(Genre genre)
 {
 	try
 	{
-		return __movies_By_ID[(unsigned long)genre].getSize();
+		return __movies_ordered_by_ID[static_cast<unsigned long>(genre)].getSize();
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -272,6 +362,13 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 	return (i++ == 0) ? 11 : 2;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::get_all_movies(Genre genre, int *const output)
 {
 	if (output == nullptr)
@@ -282,20 +379,31 @@ StatusType streaming_database::get_all_movies(Genre genre, int *const output)
 
 	try
 	{
-		our::storeID storeid(output);
-		__movies_By_Rating_Views_reversedID[(unsigned long)genre].in_order_traversal(storeid);
+		// our::storeID storeid(output);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].reverse_in_order_traversal(
+			[=](const std::shared_ptr<Movie> &movie)
+			{
+				static int index = 0;
+				output[index] = movie->getID();
+				index++;
+			});
 	}
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	/*
-	output[0] = 4001;	wtf are these for??
+	output[0] = 4001;
 	output[1] = 4002;
-	*/
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 {
 	if (userId <= 0)
@@ -303,7 +411,7 @@ output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 	try
 	{
 		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user = __users.find(tempUser);
+		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
 
 		return user->getNumOfViews(genre);
 	}
@@ -319,6 +427,13 @@ output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 	return 2008;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 {
 	if (userId <= 0 || movieId <= 0 || rating < 0 || rating > 100)
@@ -327,15 +442,19 @@ StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 	try
 	{
 		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user = __users.find(tempUser);
+		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
 
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_By_ID[(unsigned long)Genre::NONE].find(tempMovie);
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(tempMovie);
 
 		if (movie->isVIPOnly() && !user->isVIP())
 			return StatusType::FAILURE;
 
+		// remember when using a shared pointer the Movie Object will NOT die here (even if we didn't use a NONE tree)
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].remove(movie);
 		movie->rate(rating);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(movie);
+		// now the __movies_ordered_by_rating_views_reversedID is updated as it should
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -345,14 +464,17 @@ StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 	{
 		return StatusType::FAILURE;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
-	{
-		return StatusType::FAILURE;
-	}
 
 	return StatusType::SUCCESS;
 }
 
+/**
+ * @brief
+ * @tparam
+ * Time_Complexity:
+ * @tparam
+ * Space_Complexity:
+ */
 output_t<int> streaming_database::get_group_recommendation(int groupId)
 {
 	if (groupId <= 0)
@@ -361,16 +483,16 @@ output_t<int> streaming_database::get_group_recommendation(int groupId)
 	try
 	{
 		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(groupId));
-		std::shared_ptr<GroupWatch> group = __groups.find(tempGroup);
+		std::shared_ptr<GroupWatch> group = __groups_ordered_by_ID.find(tempGroup);
 
 		if (group->isEmpty())
 			return StatusType::FAILURE;
 
 		Genre favGenre = group->getFavGenre();
-		if (__movies_By_ID[(unsigned long)favGenre].isEmpty())
+		if (__movies_ordered_by_ID[static_cast<unsigned long>(favGenre)].isEmpty())
 			return StatusType::FAILURE;
 
-		return __movies_By_Rating_Views_reversedID[(unsigned long)favGenre].getMax()->getID(); // this isn't true,  we need to return (in case of double equality) the movie with the lesser ID
+		return __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(favGenre)].getMax()->getID(); // this isn't true,  we need to return (in case of double equality) the movie with the lesser ID
 	}
 	catch (const std::bad_alloc &e)
 	{
