@@ -10,7 +10,7 @@
 // .. WILL use our file.
 // 
 
-#include "StreamingDBa1.h"
+#include "../lib/StreamingDBa1.h"
 #include <string>
 #include <iostream>
 
@@ -22,6 +22,7 @@ void query_get_all_movies(string cmd, streaming_database *obj, Genre genre);
 
 int main()
 {
+	
     int d1, d2, d3, g1;
     string b1;
     bool b;

@@ -1,4 +1,4 @@
-#include "Movie_User_GroupWatch.h"
+#include "../lib/Movie_User_GroupWatch.h"
 
 
 GroupWatch::GroupWatch(int id)
