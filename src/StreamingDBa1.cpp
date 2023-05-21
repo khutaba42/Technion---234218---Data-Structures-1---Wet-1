@@ -1,4 +1,4 @@
-#include "StreamingDBa1.h"
+#include "../lib/StreamingDBa1.h"
 
 /**
  * @brief
@@ -51,7 +51,7 @@ StatusType streaming_database::add_movie(int movieId, Genre genre, int views, bo
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>>::ElementAlreadyExistsException &)
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::ElementAlreadyExistsException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -83,7 +83,7 @@ StatusType streaming_database::remove_movie(int movieId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}*/
-	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -111,7 +111,7 @@ StatusType streaming_database::add_user(int userId, bool isVip)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::ElementAlreadyExistsException &)
+	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::ElementAlreadyExistsException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -145,7 +145,7 @@ StatusType streaming_database::remove_user(int userId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -172,7 +172,7 @@ StatusType streaming_database::add_group(int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>>::ElementAlreadyExistsException &)
+	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::ElementAlreadyExistsException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -200,7 +200,7 @@ StatusType streaming_database::remove_group(int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -233,12 +233,12 @@ StatusType streaming_database::add_user_to_group(int userId, int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &e)
+	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &e)
 	{
 		e.what();
 		return StatusType::FAILURE;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -282,11 +282,11 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -329,11 +329,11 @@ StatusType streaming_database::group_watch(int groupId, int movieId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -419,7 +419,7 @@ output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -460,7 +460,7 @@ StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
@@ -498,7 +498,7 @@ output_t<int> streaming_database::get_group_recommendation(int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
 	{
 		return StatusType::FAILURE;
 	}
