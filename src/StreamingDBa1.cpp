@@ -377,11 +377,10 @@ StatusType streaming_database::get_all_movies(Genre genre, int *const output)
 
 	try
 	{
-		// our::storeID storeid(output);
+		int index = 0;
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].reverse_in_order_traversal(
-			[=](const std::shared_ptr<Movie> &movie)
+			[&](const std::shared_ptr<Movie> &movie)
 			{
-				static int index = 0;
 				output[index] = movie->getID();
 				index++;
 			});

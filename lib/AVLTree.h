@@ -80,21 +80,22 @@ public:
      * @tparam
      * Space_Complexity:
      */
-    bool remove(const DATA_TYPE &data);
+    void remove(const DATA_TYPE &data);
     DATA_TYPE &find(const DATA_TYPE &data);
     const DATA_TYPE &getMax() const;
     const DATA_TYPE &getMin() const;
 
     template <typename FunctionObject>
-    void in_order_traversal(FunctionObject do_something) 
+    void in_order_traversal(FunctionObject do_something)
     {
         in_order_traversal_aux_recursive(__root.get(), do_something);
     }
     template <typename FunctionObject>
-    void reverse_in_order_traversal(FunctionObject do_something) 
+    void reverse_in_order_traversal(FunctionObject do_something)
     {
         reverse_in_order_traversal_aux_recursive(__root.get(), do_something);
     }
+
 private:
     struct Node;
     using Node_pointer = Node *;
@@ -126,7 +127,10 @@ private:
 
 #endif // TESTING
 
-    Node_pointer getRoot() {return __root.get();}
+    Node_pointer getRoot()
+    {
+        return __root.get();
+    }
     struct Node
     {
         DATA_TYPE __data;
@@ -135,7 +139,7 @@ private:
         Node_unique_ptr __right;
         int __height;
 
-        Node(const DATA_TYPE &data) : __data(data),  __parent(nullptr), __left(nullptr), __right(nullptr), __height(0) {}
+        Node(const DATA_TYPE &data) : __data(data), __parent(nullptr), __left(nullptr), __right(nullptr), __height(0) {}
 
         ~Node() = default;
 
@@ -543,13 +547,13 @@ private:
             }
             else if (result == Comparison::greater)
             {
-                if(tempNodePtr->getLeftPointer() == nullptr)
+                if (tempNodePtr->getLeftPointer() == nullptr)
                     break;
                 tempNodePtr = tempNodePtr->getLeftPointer();
             }
             else if (result == Comparison::less)
             {
-                if(tempNodePtr->getRightPointer() == nullptr)
+                if (tempNodePtr->getRightPointer() == nullptr)
                     break;
                 tempNodePtr = tempNodePtr->getRightPointer();
             }
@@ -616,6 +620,102 @@ private:
         {
             tempFixHeight->recalculateHeight();
             tempFixHeight = tempFixHeight->__parent;
+        }
+        return true;
+    }
+
+    bool remove_aux(const DATA_TYPE &data)
+    {
+        // search for the node(unique pointer)
+        Node_pointer tempNodePtr = __root.get();
+        while (tempNodePtr != nullptr)
+        {
+            Comparison result = compFunction(tempNodePtr->getData(), data);
+            if (result == Comparison::equal)
+            {
+                break;
+            }
+            else if (result == Comparison::greater)
+            {
+                tempNodePtr = tempNodePtr->getLeftPointer();
+            }
+            else if (result == Comparison::less)
+            {
+                tempNodePtr = tempNodePtr->getRightPointer();
+            }
+        }
+        if (tempNodePtr == nullptr)
+        {
+            return false;
+        }
+        // now tempNodePtr points to a (valid) node we want to remove
+        Node_pointer toDeletePtr = tempNodePtr;
+        bool hasLeft = toDeletePtr->hasLeft();
+        bool hasRight = toDeletePtr->hasRight();
+        if (hasLeft && hasRight)
+        {
+            toDeletePtr = toDeletePtr->getRightPointer();
+            while (toDeletePtr->hasLeft())
+            {
+                toDeletePtr = toDeletePtr->getLeftPointer();
+            }
+            our::swap(toDeletePtr->getData(), tempNodePtr->getData());
+            // think of better solution
+        }
+        Node_pointer parentOfToDelete = toDeletePtr->__parent;
+        Node_unique_ptr &toDeleteUniquePtr = getUniquePtr(*toDeletePtr);
+        hasLeft = toDeletePtr->hasLeft();
+        hasRight = toDeletePtr->hasRight();
+        if (!hasLeft && !hasRight) // leaf
+        {
+            toDeleteUniquePtr.reset();
+        }
+        if (hasLeft && !hasRight)
+        {
+            rotateLeft(toDeleteUniquePtr); // the node we want to delete is the right son of the node that toDeleteUniquePte points to
+            toDeleteUniquePtr->__right.reset();
+            parentOfToDelete = toDeletePtr;
+        }
+        if (!hasLeft && hasRight)
+        {
+            rotateRight(toDeleteUniquePtr); // the node we want to delete is the left son of the node that toDeleteUniquePte points to
+            toDeleteUniquePtr->__left.reset();
+            parentOfToDelete = toDeletePtr;
+        }
+
+        // now we should update the path in the AVL tree
+        Node_pointer temp = parentOfToDelete;
+        while (temp != nullptr)
+        {
+            temp->recalculateHeight();
+            if (!temp->isAVLBalanced())
+            {
+                if (temp->balanceFactor() >= 2) // left heavy
+                {
+                    if (temp->__left->balanceFactor() >= 0) // LL rotation
+                    {
+                        rotateLeft(getUniquePtr(*temp));
+                    }
+                    else // balanceFactor == -1, LR rotation
+                    {
+                        rotateRight(temp->__left);
+                        rotateLeft(getUniquePtr(*temp));
+                    }
+                }
+                else if (temp->balanceFactor() <= -2) // right heavy
+                {
+                    if (temp->__right->balanceFactor() <= 0) // RR rotation
+                    {
+                        rotateRight(getUniquePtr(*temp));
+                    }
+                    else // balanceFactor == 1, RL rotation
+                    {
+                        rotateLeft(temp->__right);
+                        rotateRight(getUniquePtr(*temp));
+                    }
+                }
+            }
+            temp = temp->__parent;
         }
         return true;
     }
@@ -729,98 +829,11 @@ void AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
     }
 }
 template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
+void AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
 {
-    // search for the node(unique pointer)
-    Node_pointer tempNodePtr = __root.get();
-    while (tempNodePtr != nullptr)
+    if (!remove_aux(data))
     {
-        Comparison result = compFunction(tempNodePtr->getData(), data);
-        if (result == Comparison::equal)
-        {
-            break;
-        }
-        else if (result == Comparison::greater)
-        {
-            tempNodePtr = tempNodePtr->getLeftPointer();
-        }
-        else if (result == Comparison::less)
-        {
-            tempNodePtr = tempNodePtr->getRightPointer();
-        }
-    }
-    if (tempNodePtr == nullptr)
-    {
-        return false;
-    }
-    // now tempNodePtr points to a (valid) node we want to remove
-    Node_pointer toDeletePtr = tempNodePtr;
-    bool hasLeft = toDeletePtr->hasLeft();
-    bool hasRight = toDeletePtr->hasRight();
-    if (hasLeft && hasRight)
-    {
-        toDeletePtr = toDeletePtr->getRightPointer();
-        while (toDeletePtr->hasLeft())
-        {
-            toDeletePtr = toDeletePtr->getLeftPointer();
-        }
-        our::swap(toDeletePtr->getData(), tempNodePtr->getData());
-        // think of better solution
-    }
-    Node_pointer parentOfToDelete = toDeletePtr->__parent;
-    Node_unique_ptr &toDeleteUniquePtr = getUniquePtr(*toDeletePtr);
-    hasLeft = toDeletePtr->hasLeft();
-    hasRight = toDeletePtr->hasRight();
-    if (!hasLeft && !hasRight) // leaf
-    {
-        toDeleteUniquePtr.reset();
-    }
-    if (hasLeft && !hasRight)
-    {
-        rotateLeft(toDeleteUniquePtr); // the node we want to delete is the right son of the node that toDeleteUniquePte points to
-        toDeleteUniquePtr->__right.reset();
-        parentOfToDelete = toDeletePtr;
-    }
-    if (!hasLeft && hasRight)
-    {
-        rotateRight(toDeleteUniquePtr); // the node we want to delete is the left son of the node that toDeleteUniquePte points to
-        toDeleteUniquePtr->__left.reset();
-        parentOfToDelete = toDeletePtr;
-    }
-
-    // now we should update the path in the AVL tree
-    Node_pointer temp = parentOfToDelete;
-    while (temp != nullptr)
-    {
-        temp->recalculateHeight();
-        if (!temp->isAVLBalanced())
-        {
-            if (temp->balanceFactor() >= 2) // left heavy
-            {
-                if (temp->__left->balanceFactor() >= 0) // LL rotation
-                {
-                    rotateLeft(getUniquePtr(*temp));
-                }
-                else // balanceFactor == -1, LR rotation
-                {
-                    rotateRight(temp->__left);
-                    rotateLeft(getUniquePtr(*temp));
-                }
-            }
-            if (temp->balanceFactor() <= -2) // right heavy
-            {
-                if (temp->__right->balanceFactor() <= 0) // RR rotation
-                {
-                    rotateRight(getUniquePtr(*temp));
-                }
-                else // balanceFactor == 1, RL rotation
-                {
-                    rotateLeft(temp->__right);
-                    rotateRight(getUniquePtr(*temp));
-                }
-            }
-        }
-        temp = temp->__parent;
+        throw NoSuchElementException();
     }
     __size--;
     if (!isEmpty())
@@ -836,7 +849,6 @@ bool AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
             __max_element_ptr = __max_element_ptr->getRightPointer();
         }
     }
-    return true;
 }
 
 template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>

@@ -28,7 +28,7 @@ int main()
     bool b;
 
     // Init
-    streaming_database *obj = new streaming_database();
+    std::unique_ptr<streaming_database> obj(new streaming_database());
 	
     // Execute all commands in file
 	string op;
@@ -80,7 +80,7 @@ int main()
             print(op, obj->get_all_movies_count((Genre) g1));
         } else if (!op.compare("get_all_movies")) {
             cin >> g1;
-            query_get_all_movies(op, obj, (Genre) g1);
+            query_get_all_movies(op, obj.get(), (Genre) g1);
         } else if (!op.compare("user_watch")) {
             cin >> d1 >> d2;
             print(op, obj->user_watch(d1, d2));
@@ -108,7 +108,6 @@ int main()
     }
 
     // Quit 
-	delete obj;
 	return 0;
 }
 
