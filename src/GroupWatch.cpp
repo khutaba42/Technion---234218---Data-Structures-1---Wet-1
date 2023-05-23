@@ -4,7 +4,7 @@
 GroupWatch::GroupWatch(int id)
     : __id(id), __numOfVipUsers(0), __numOfUsers(0)
 {
-    for (short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
     {
         __numOfCurrUsersViews[i] = 0;
         __groupViews[i] = 0;
@@ -13,10 +13,16 @@ GroupWatch::GroupWatch(int id)
 
 GroupWatch::~GroupWatch() {
     __users.in_order_traversal(
-        [](std::shared_ptr<User>& user){
+                [](std::shared_ptr<User>& user){
             user->prepareUsersForEntireGroupDeletion();
         }
     );
+
+    /*.in_order_traversal(
+        [](std::shared_ptr<User>& user){
+            user->prepareUsersForEntireGroupDeletion();
+        }
+    );*/
 }
 
 /**
@@ -97,7 +103,7 @@ Genre GroupWatch::getFavGenre() const
 {
     int favGenre = 0, maxGenreViews = 0;
 
-    for (int i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         if (__numOfCurrUsersViews[i] > maxGenreViews)
         {

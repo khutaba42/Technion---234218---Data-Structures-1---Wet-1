@@ -4,7 +4,7 @@
 User::User(int id, bool vip)
     : __id(id), __vip(vip), __group(nullptr)
 {
-    for (short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
     {
         __soloViews[i] = 0;
         __groupViewsWhenJoined[i] = 0;
@@ -48,7 +48,7 @@ void User::getInGroup(GroupWatch *group)
     }
     __group = group;
 
-    for (short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
     {
         __groupViewsWhenJoined[i] = __group->getNumOfViews(static_cast<Genre>(i));
     }
@@ -66,7 +66,7 @@ void User::removeUserFromGroup()
     {
         return;
     }
-    for (short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         __group->addNumOfCurrUsersViews(-__soloViews[i], static_cast<Genre>(i));
     }
@@ -86,7 +86,7 @@ void User::prepareUsersForEntireGroupDeletion()
     {
         return;
     }
-    for (short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
     {
         __groupViewsWhenJoined[i] = 0;
     }

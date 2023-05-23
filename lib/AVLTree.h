@@ -1,17 +1,10 @@
 #ifndef _AVL_TREE_H_
 #define _AVL_TREE_H_
 
-#include <memory>
-#include "ourUtilityFunctions.h"
-#include <exception>
-
-// comment out for no testing
-#define TESTING
-
-#ifdef TESTING
-// includes for testing
+#include <string>
 #include <iostream>
-#endif // TESTING
+#include "stack.h"
+#include <exception>
 
 // for comparing
 enum class Comparison
@@ -32,13 +25,98 @@ inline Comparison AVLTree_CompareUsingOperators(const T &left, const T &right)
         return Comparison::equal;
 }
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &) = AVLTree_CompareUsingOperators<DATA_TYPE>>
+template <typename T, Comparison (*compFunction)(const T &, const T &) = AVLTree_CompareUsingOperators<T>>
 class AVLTree
 {
-public:
-    // error classes
+    struct AVLTreeNode
+    {
+        AVLTreeNode *__left;
+        AVLTreeNode *__right;
 
-    // if an element do not exists
+        T __value;
+        int __count; // how many nodes are there in this subtree
+        int __height;
+
+        AVLTreeNode(T value) : __value(value)
+        {
+            __count = 1;
+            __height = 1;
+
+            __left = nullptr;
+            __right = nullptr;
+        }
+
+        void updateValues()
+        {
+            __count = ((__left != nullptr) ? __left->__count : 0) + ((__right != nullptr) ? __right->__count : 0) + 1;
+
+            __height = std::max(__left != nullptr ? __left->__height : 0,
+                              __right != nullptr ? __right->__height : 0) +
+                     1;
+        }
+
+        int balanceFactor()
+        {
+            return (__left != nullptr ? __left->__height : 0) - (__right != nullptr ? __right->__height : 0);
+        }
+
+        AVLTreeNode *left_rotate()
+        {
+            AVLTreeNode *R = __right;
+            __right = __right->__left;
+            R->__left = this;
+
+            this->updateValues(); // the order is important
+            R->updateValues();
+
+            return R;
+        }
+
+        AVLTreeNode *right_rotate()
+        {
+            AVLTreeNode *L = __left;
+            __left = __left->__right;
+            L->__right = this;
+
+            this->updateValues(); // the order is important
+            L->updateValues();
+
+            return L;
+        }
+    };
+    int __size;
+    AVLTreeNode *__root;
+
+    void balance(Stack<AVLTreeNode **> &path);
+    void display(AVLTreeNode *cur, int depth = 0, int state = 0);
+
+    template <typename FunctionObject>
+    bool in_order_traversal_aux_recursive(AVLTreeNode *const root, FunctionObject do_something) const
+    {
+        if (root == nullptr)
+        {
+            return false;
+        }
+        in_order_traversal_aux_recursive(root->__left, do_something);
+        do_something(root->__value);
+        in_order_traversal_aux_recursive(root->__right, do_something);
+        return true;
+    }
+
+    template <typename FunctionObject>
+    bool reverse_in_order_traversal_aux_recursive(AVLTreeNode *const root, FunctionObject do_something) const
+    {
+        if (root == nullptr)
+        {
+            return false;
+        }
+        reverse_in_order_traversal_aux_recursive(root->__right, do_something);
+        do_something(root->__value);
+        reverse_in_order_traversal_aux_recursive(root->__left, do_something);
+        return true;
+    }
+
+public:
     class NoSuchElementException : public std::exception
     {
     public:
@@ -50,866 +128,371 @@ public:
         const char *what() const noexcept override { return "Element already exists"; }
     };
 
-    // methods
-
     AVLTree();
-    ~AVLTree() = default;
-    AVLTree(const AVLTree &src);
+    ~AVLTree();
 
-    AVLTree &operator=(const AVLTree &src);
+    void insert(T value);
+    void remove(T value);
+
     void clear();
     bool isEmpty() const;
-    int height() const;
     int getSize() const;
-    /**
-     * @return true if element inserted successfully
-     * @throw ElementAlreadyExistsException
-     * @brief
-     * @tparam
-     * Time_Complexity:
-     * @tparam
-     * Space_Complexity:
-     */
-    void insert(const DATA_TYPE &data);
-    /**
-     * @return none
-     * @throw NoSuchElementException
-     * @brief
-     * @tparam
-     * Time_Complexity:
-     * @tparam
-     * Space_Complexity:
-     */
-    void remove(const DATA_TYPE &data);
-    DATA_TYPE &find(const DATA_TYPE &data);
-    const DATA_TYPE &getMax() const;
-    const DATA_TYPE &getMin() const;
+
+    T &find(T value);
+    const T &find(T value) const;
+    const T &getMin() const;
+    const T &getMax() const;
+    T &operator[](std::size_t idx);
+    const T &operator[](std::size_t idx) const;
 
     template <typename FunctionObject>
-    void in_order_traversal(FunctionObject do_something)
+    void in_order_traversal(FunctionObject do_something) const
     {
-        in_order_traversal_aux_recursive(__root.get(), do_something);
+        in_order_traversal_aux_recursive(__root, do_something);
     }
+
     template <typename FunctionObject>
     void reverse_in_order_traversal(FunctionObject do_something)
     {
-        reverse_in_order_traversal_aux_recursive(__root.get(), do_something);
+        reverse_in_order_traversal_aux_recursive(__root, do_something);
     }
 
-private:
-    struct Node;
-    using Node_pointer = Node *;
-    using Node_unique_ptr = std::unique_ptr<Node>;
-
-    Node_unique_ptr __root;
-    int __size;
-    Node_pointer __min_element_ptr;
-    Node_pointer __max_element_ptr;
-
-    /* Helper Functions
-    bool rotateLeft(Node_unique_ptr &node_ptr);
-    bool rotateRight(Node_unique_ptr &node_ptr);
-    Node_unique_ptr &getUniquePtr(const Node &node);
-    bool swapWithLeftChild(Node_unique_ptr &node_ptr);
-    bool swapWithRightChild(Node_unique_ptr &node_ptr);
-    void swapData(Node_unique_ptr &first, Node_unique_ptr &second);
-    void swap(Node_unique_ptr &first, Node_unique_ptr &second);
-    template<FunctionObject do_something>
-    bool in_order_traversal_aux() const;
-    */
-
-#ifdef TESTING
-public:
-    void print() const;
-
-private:
-    void printNode(const Node_pointer &node_ptr, int depth) const;
-
-#endif // TESTING
-
-    Node_pointer getRoot()
-    {
-        return __root.get();
-    }
-    struct Node
-    {
-        DATA_TYPE __data;
-        Node_pointer __parent;
-        Node_unique_ptr __left;
-        Node_unique_ptr __right;
-        int __height;
-
-        Node(const DATA_TYPE &data) : __data(data), __parent(nullptr), __left(nullptr), __right(nullptr), __height(0) {}
-
-        ~Node() = default;
-
-        Node(const Node &src) : __parent(nullptr), __data(src.getData()), __left(nullptr), __right(nullptr), __height(src.__height)
-        {
-            if (src.hasLeft())
-            {
-                setLeft(src.__left->getData());
-            }
-            if (src.hasRight())
-            {
-                setRight(src.__right->getData());
-            }
-        }
-
-        DATA_TYPE &getData()
-        {
-            return __data;
-        }
-
-        Node_pointer getLeftPointer() const
-        {
-            return __left.get();
-        }
-
-        Node_pointer getRightPointer() const
-        {
-            return __right.get();
-        }
-
-        void setLeft(const DATA_TYPE &data)
-        {
-            __left.reset(new Node(data));
-            __left->__parent = this;
-            Node_pointer temp = this;
-            while (temp != nullptr)
-            {
-                temp->recalculateHeight();
-                temp = temp->__parent;
-            }
-        }
-
-        void setRight(const DATA_TYPE &data)
-        {
-            __right.reset(new Node(data));
-            __right->__parent = this;
-            Node_pointer temp = this;
-            while (temp != nullptr)
-            {
-                temp->recalculateHeight();
-                temp = temp->__parent;
-            }
-        }
-
-        void recalculateHeight()
-        {
-            __height = 1 + our::max((hasLeft()) ? (__left->__height) : (-1), (hasRight()) ? (__right->__height) : (-1));
-        }
-
-        bool isLeaf() const
-        {
-            return ((__left == nullptr) && (__right == nullptr));
-        }
-
-        bool isRoot() const
-        {
-            return (__parent == nullptr);
-        }
-
-        bool hasLeft() const
-        {
-            return (!(__left == nullptr));
-        }
-
-        bool hasRight() const
-        {
-            return (!(__right == nullptr));
-        }
-
-        int balanceFactor() const
-        {
-            return ((hasLeft()) ? (__left->__height) : (-1)) - ((hasRight()) ? (__right->__height) : (-1));
-        }
-
-        bool isAVLBalanced() const
-        {
-            return our::abs(balanceFactor()) <= 1;
-        }
-    };
-
-    /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-       +---------------------------------------------------------------+
-       |                                                               |
-       |        AVLTree Helper Functions Implementations               |
-       |                                                               |
-       +---------------------------------------------------------------+
-    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
-    /**
-     * @brief takes in a pointer for the node to be rotated to the left
-     *
-     * @warning check for the root (special case)
-                 A                                     B
-                / \                                   / \
-               /   \                                 /   \
-              B     a           ==>                 c     A
-             / \                                         / \
-            /   \                                       /   \
-           c     b                                     b     a
-    */
-    bool rotateLeft(Node_unique_ptr &node_ptr) // node_ptr is pointing to A
-    {
-        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasLeft())
-        {
-            return false;
-        }
-        // else, we can rotate
-        Node_unique_ptr &pointer_to_root = node_ptr;
-        Node_unique_ptr &pointer_to_A_left = pointer_to_root->__left;
-        Node_unique_ptr &pointer_to_B_right = pointer_to_A_left->__right;
-
-        Node_unique_ptr temp_unique_pointer;
-        pointer_to_B_right.swap(temp_unique_pointer);
-        pointer_to_B_right.swap(pointer_to_root);
-        pointer_to_A_left.swap(temp_unique_pointer);
-        pointer_to_root.swap(temp_unique_pointer);
-
-        /**
-         * now:
-         * pointer_to_root points to B
-         * pointer_to_A_left points to b
-         * pointer_to_B_right points to A
-         */
-
-        pointer_to_root->__parent = pointer_to_B_right->__parent; // B's parent points to A's previous parent
-        pointer_to_B_right->__parent = pointer_to_root.get();     // B is the parent of A
-        if (pointer_to_A_left.get() != nullptr)
-        {
-            pointer_to_A_left->__parent = pointer_to_B_right.get(); // A is the parent of b
-        }
-
-        pointer_to_B_right->recalculateHeight();
-        pointer_to_root->recalculateHeight();
-
-        return true;
-    }
-    /**
-     * @brief takes in a pointer for the node to be rotated to the right
-     *
-     * @warning check for the root (special case)
-                     A                                        B
-                    / \                                      / \
-                   /   \                                    /   \
-                  a     B              ==>                 A     c
-                       / \                                / \
-                      /   \                              /   \
-                     b     c                            a     b
-    */
-    bool rotateRight(Node_unique_ptr &node_ptr)
-    {
-        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasRight())
-        {
-            return false;
-        }
-        // else, we can rotate
-        Node_unique_ptr &pA = node_ptr;
-        Node_unique_ptr &pB = pA->__right;
-        Node_unique_ptr &pb = pB->__left;
-
-        Node_unique_ptr tempPtr;
-        pb.swap(tempPtr);
-        pb.swap(pA);
-        pB.swap(tempPtr);
-        pA.swap(tempPtr);
-
-        /**
-         * now:
-         * pA points to B
-         * pB points to b
-         * pb points to A
-         */
-
-        pA->__parent = pb->__parent; // B's parent points to A's previous parent
-        pb->__parent = pA.get();     // B is the parent of A
-        if (pB.get() != nullptr)
-        {
-            pB->__parent = pb.get();
-        } // A is the parent of b
-
-        pb->recalculateHeight();
-        pA->recalculateHeight();
-
-        return true;
-    }
-    Node_unique_ptr &getUniquePtr(const Node &node)
-    {
-        if (node.isRoot())
-            return __root;
-        if (node.__parent->getLeftPointer() == &node)
-        {
-            return node.__parent->__left;
-        }
-        else
-        {
-            return node.__parent->__right;
-        }
-    }
-    /**
-     * @brief takes in a pointer for the node to be rotated to the left
-     *
-     * @warning check for the root (special case)
-                 A                                     B
-                / \                                   / \
-               /   \                                 /   \
-              B     a           ==>                 A     a
-             / \                                   / \
-            /   \                                 /   \
-           c     b                               c     b
-    */
-    bool swapWithLeftChild(Node_unique_ptr &node_ptr)
-    {
-        if ((node_ptr.get() == nullptr) || (node_ptr->isLeaf()) || !(node_ptr->hasLeft()))
-        {
-            return false;
-        }
-        Node_unique_ptr &pA = node_ptr;
-        Node_unique_ptr &pB = pA->__left;
-        Node_unique_ptr &pb = pB->__right;
-        Node_unique_ptr &pc = pB->__left;
-        Node_unique_ptr &pa = pA->__right;
-        Node_unique_ptr tempPtr;
-
-        pa.swap(pb);
-        pc.swap(tempPtr);
-        pc.swap(pA);
-        pB.swap(tempPtr);
-        pA.swap(tempPtr);
-
-        /**
-         * now:
-         * pA points to B
-         * pB points to c
-         * pb points to a
-         * pa points to b
-         * pc points to A
-         */
-
-        pA->__parent = pc->__parent;
-        pc->__parent = pA.get();
-        if (pB.get() != nullptr)
-        {
-            pB->__parent = pc.get();
-        }
-        if (pb.get() != nullptr)
-        {
-            pb->__parent = pA.get();
-        }
-        if (pa.get() != nullptr)
-        {
-            pa->__parent = pc.get();
-        }
-        our::swap(pA->__height, pc->__height);
-
-        return true;
-    }
-    /**
-     * @brief takes in a pointer for the node to be rotated to the right
-     *
-     * @warning check for the root (special case)
-                 A                                     B
-                / \                                   / \
-               /   \                                 /   \
-              a     B                 ==>           a     A
-                   / \                                   / \
-                  /   \                                 /   \
-                 c     b                               c     b
-    */
-    bool swapWithRightChild(Node_unique_ptr &node_ptr)
-    {
-        if (node_ptr.get() == nullptr || node_ptr->isLeaf() || !node_ptr->hasRight())
-        {
-            return false;
-        }
-        Node_unique_ptr &pA = node_ptr;
-        Node_unique_ptr &pB = pA->__right;
-        Node_unique_ptr &pb = pB->__right;
-        Node_unique_ptr &pc = pB->__left;
-        Node_unique_ptr &pa = pA->__left;
-        Node_unique_ptr tempPtr;
-
-        pa.swap(pc);
-        pb.swap(tempPtr);
-        pb.swap(pA);
-        pB.swap(tempPtr);
-        pA.swap(tempPtr);
-
-        /**
-         * now:
-         * pA points to B
-         * pB points to b
-         * pb points to A
-         * pa points to c
-         * pc points to a
-         */
-
-        pA->__parent = pb->__parent;
-        pb->__parent = pA.get();
-        if (pB.get() != nullptr)
-        {
-            pB->__parent = pb.get();
-        }
-        if (pc.get() != nullptr)
-        {
-            pc->__parent = pA.get();
-        }
-        if (pa.get() != nullptr)
-        {
-            pa->__parent = pb.get();
-        }
-        our::swap(pA->__height, pb->__height);
-
-        return true;
-    }
-
-    void swapData(Node_unique_ptr &first, Node_unique_ptr &second)
-    {
-        our::swap(first->getData(), second->getData());
-    }
-    void swap(Node_unique_ptr &first, Node_unique_ptr &second)
-    {
-        if (first.get() != second.get()) // don't really need to check for self swap
-        {
-            if (first->getRightPointer() == second.get())
-            {
-                swapWithRightChild(first);
-            }
-            if (first->getLeftPointer() == second.get())
-            {
-                swapWithLeftChild(first);
-            }
-            else if (second->getRightPointer() == first.get())
-            {
-                swapWithRightChild(second);
-            }
-            else if (second->getLeftPointer() == first.get())
-            {
-                swapWithLeftChild(second);
-            }
-            else
-            {
-                first->__left.swap(second->__left);           // swap left children
-                first->__right.swap(second->__right);         // swap right children
-                first.swap(second);                           // swap the nodes themselves (what the unique ptrs point to)
-                our::swap(first->__parent, second->__parent); // update the parents
-                our::swap(first->__height, second->__height);
-            }
-        }
-    }
-
-    template <typename FunctionObject>
-    bool in_order_traversal_aux_recursive(Node_pointer root, FunctionObject do_something) const
-    {
-        if (root == nullptr)
-        {
-            return false;
-        }
-        in_order_traversal_aux_recursive(root->getLeftPointer(), do_something);
-        do_something(root->getData());
-        in_order_traversal_aux_recursive(root->getRightPointer(), do_something);
-        return true;
-    }
-
-    template <typename FunctionObject>
-    bool reverse_in_order_traversal_aux_recursive(Node_pointer root, FunctionObject do_something) const
-    {
-        if (root == nullptr)
-        {
-            return false;
-        }
-        reverse_in_order_traversal_aux_recursive(root->getRightPointer(), do_something);
-        do_something(root->getData());
-        reverse_in_order_traversal_aux_recursive(root->getLeftPointer(), do_something);
-        return true;
-    }
-
-    bool insert_aux(const DATA_TYPE &data)
-    {
-        if (isEmpty())
-        {
-            __root.reset(new Node(data));
-            return true;
-        }
-        Node_pointer tempNodePtr = __root.get();
-        while (!tempNodePtr->isLeaf())
-        {
-            Comparison result = compFunction(tempNodePtr->getData(), data);
-            if (result == Comparison::equal)
-            {
-                return false;
-            }
-            else if (result == Comparison::greater)
-            {
-                if (tempNodePtr->getLeftPointer() == nullptr)
-                    break;
-                tempNodePtr = tempNodePtr->getLeftPointer();
-            }
-            else if (result == Comparison::less)
-            {
-                if (tempNodePtr->getRightPointer() == nullptr)
-                    break;
-                tempNodePtr = tempNodePtr->getRightPointer();
-            }
-        }
-        // check where to go at the leaf
-        Comparison result = compFunction(tempNodePtr->getData(), data);
-        if (result == Comparison::equal)
-        {
-            return false;
-        }
-        else if (result == Comparison::greater)
-        {
-            tempNodePtr->setLeft(data);
-        }
-        else if (result == Comparison::less)
-        {
-            tempNodePtr->setRight(data);
-        }
-        // now the new data is added
-
-        Node_pointer tempFixHeight = tempNodePtr;
-        while (tempFixHeight != nullptr)
-        {
-            tempFixHeight->recalculateHeight();
-            tempFixHeight = tempFixHeight->__parent;
-        }
-        tempFixHeight = tempNodePtr;
-
-        while ((tempNodePtr != nullptr) && (tempNodePtr->isAVLBalanced()))
-        {
-            tempNodePtr = tempNodePtr->__parent;
-        }
-
-        if (tempNodePtr != nullptr)
-        {
-            if (tempNodePtr->balanceFactor() >= 2) // left heavy
-            {
-                if (tempNodePtr->__left->balanceFactor() >= 0) // LL rotation
-                {
-                    // rotateLeft(tempNodePtr->__left);
-                    rotateLeft(getUniquePtr(*(tempNodePtr)));
-                }
-                else // balanceFactor == -1, LR rotation
-                {
-                    rotateRight(tempNodePtr->__left);
-                    rotateLeft(getUniquePtr(*(tempNodePtr)));
-                }
-            }
-            if (tempNodePtr->balanceFactor() <= -2) // right heavy
-            {
-                if (tempNodePtr->__right->balanceFactor() <= 0) // RR rotation
-                {
-                    // rotateRight(tempNodePtr->__right);
-                    rotateRight(getUniquePtr(*(tempNodePtr)));
-                }
-                else // balanceFactor == 1, RL rotation
-                {
-                    rotateLeft(tempNodePtr->__right);
-                    rotateRight(getUniquePtr(*(tempNodePtr)));
-                }
-            }
-        }
-        while (tempFixHeight != nullptr)
-        {
-            tempFixHeight->recalculateHeight();
-            tempFixHeight = tempFixHeight->__parent;
-        }
-        return true;
-    }
-
-    bool remove_aux(const DATA_TYPE &data)
-    {
-        // search for the node(unique pointer)
-        Node_pointer tempNodePtr = __root.get();
-        while (tempNodePtr != nullptr)
-        {
-            Comparison result = compFunction(tempNodePtr->getData(), data);
-            if (result == Comparison::equal)
-            {
-                break;
-            }
-            else if (result == Comparison::greater)
-            {
-                tempNodePtr = tempNodePtr->getLeftPointer();
-            }
-            else if (result == Comparison::less)
-            {
-                tempNodePtr = tempNodePtr->getRightPointer();
-            }
-        }
-        if (tempNodePtr == nullptr)
-        {
-            return false;
-        }
-        // now tempNodePtr points to a (valid) node we want to remove
-        Node_pointer toDeletePtr = tempNodePtr;
-        bool hasLeft = toDeletePtr->hasLeft();
-        bool hasRight = toDeletePtr->hasRight();
-        if (hasLeft && hasRight)
-        {
-            toDeletePtr = toDeletePtr->getRightPointer();
-            while (toDeletePtr->hasLeft())
-            {
-                toDeletePtr = toDeletePtr->getLeftPointer();
-            }
-            our::swap(toDeletePtr->getData(), tempNodePtr->getData());
-            // think of better solution
-        }
-        Node_pointer parentOfToDelete = toDeletePtr->__parent;
-        Node_unique_ptr &toDeleteUniquePtr = getUniquePtr(*toDeletePtr);
-        hasLeft = toDeletePtr->hasLeft();
-        hasRight = toDeletePtr->hasRight();
-        if (!hasLeft && !hasRight) // leaf
-        {
-            toDeleteUniquePtr.reset();
-        }
-        if (hasLeft && !hasRight)
-        {
-            rotateLeft(toDeleteUniquePtr); // the node we want to delete is the right son of the node that toDeleteUniquePte points to
-            toDeleteUniquePtr->__right.reset();
-            parentOfToDelete = toDeletePtr;
-        }
-        if (!hasLeft && hasRight)
-        {
-            rotateRight(toDeleteUniquePtr); // the node we want to delete is the left son of the node that toDeleteUniquePte points to
-            toDeleteUniquePtr->__left.reset();
-            parentOfToDelete = toDeletePtr;
-        }
-
-        // now we should update the path in the AVL tree
-        Node_pointer temp = parentOfToDelete;
-        while (temp != nullptr)
-        {
-            temp->recalculateHeight();
-            if (!temp->isAVLBalanced())
-            {
-                if (temp->balanceFactor() >= 2) // left heavy
-                {
-                    if (temp->__left->balanceFactor() >= 0) // LL rotation
-                    {
-                        rotateLeft(getUniquePtr(*temp));
-                    }
-                    else // balanceFactor == -1, LR rotation
-                    {
-                        rotateRight(temp->__left);
-                        rotateLeft(getUniquePtr(*temp));
-                    }
-                }
-                else if (temp->balanceFactor() <= -2) // right heavy
-                {
-                    if (temp->__right->balanceFactor() <= 0) // RR rotation
-                    {
-                        rotateRight(getUniquePtr(*temp));
-                    }
-                    else // balanceFactor == 1, RL rotation
-                    {
-                        rotateLeft(temp->__right);
-                        rotateRight(getUniquePtr(*temp));
-                    }
-                }
-            }
-            temp = temp->__parent;
-        }
-        return true;
-    }
+    void display();
 };
 
-/*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-   +---------------------------------------------------------------+
-   |                                                               |
-   |                    AVLTree Implementations                    |
-   |                                                               |
-   +---------------------------------------------------------------+
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
-
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-AVLTree<DATA_TYPE, compFunction>::AVLTree() : __root(nullptr), __size(0),
-                                              __min_element_ptr(nullptr),
-                                              __max_element_ptr(nullptr)
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+AVLTree<T, compFunction>::AVLTree()
 {
-}
-
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-AVLTree<DATA_TYPE, compFunction>::AVLTree(const AVLTree &src) : __root(nullptr), __size(src.__size)
-{
-    if (!src.isEmpty())
-    {
-        __root.reset(new Node(*(src.__root)));
-    }
-}
-
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-AVLTree<DATA_TYPE, compFunction> &AVLTree<DATA_TYPE, compFunction>::operator=(const AVLTree &src)
-{
-    if (&src != this)
-    {
-        if (!src.isEmpty())
-        {
-            __root.reset(new Node(*(src.__root)));
-        }
-        __size = src.__size;
-    }
-    return *this;
-}
-
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-void AVLTree<DATA_TYPE, compFunction>::clear()
-{
-    __root.reset();
+    __root = nullptr;
     __size = 0;
 }
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-bool AVLTree<DATA_TYPE, compFunction>::isEmpty() const
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+AVLTree<T, compFunction>::~AVLTree()
 {
-    return __root.get() == nullptr;
+    clear();
 }
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-int AVLTree<DATA_TYPE, compFunction>::height() const
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::clear()
 {
-    return __root->__height;
+    Stack<AVLTreeNode *> stack;
+
+    if (__root != nullptr)
+        stack.push_back(__root);
+
+    while (!stack.isEmpty())
+    {
+        AVLTreeNode *node = stack.back();
+        stack.pop_back();
+
+        if (node->__left != nullptr)
+            stack.push_back(node->__left);
+
+        if (node->__right != nullptr)
+            stack.push_back(node->__right);
+
+        __size--;
+        delete node;
+        node = nullptr; // Set the pointer to nullptr after deletion
+    }
+
+    __root = nullptr;
 }
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-int AVLTree<DATA_TYPE, compFunction>::getSize() const
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::insert(T value)
+{
+    AVLTreeNode **indirect = &__root;
+    Stack<AVLTreeNode **> path;
+
+    while (*indirect != nullptr)
+    {
+        path.push_back(indirect);
+
+        Comparison result = compFunction(value, (*indirect)->__value);
+        if (result == Comparison::less)
+            indirect = &((*indirect)->__left);
+        else if (result == Comparison::greater)
+            indirect = &((*indirect)->__right);
+        else if (result == Comparison::equal)
+            throw ElementAlreadyExistsException();
+    }
+
+    *indirect = new AVLTreeNode(value);
+    path.push_back(indirect);
+
+    balance(path);
+    __size++;
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::remove(T value)
+{
+    AVLTreeNode **indirect = &__root; // to generalize insertion
+    Stack<AVLTreeNode **> path;       // to update height values
+
+    /*
+    Searching for the Node:
+    The function starts by searching for the node containing the value from the root of the tree.
+    It keeps a pointer to the node (indirect) and records the path to the node in a stack (path) for later use.
+    If the node is not found, it throws a NoSuchElementException.
+    */
+    while (*indirect != nullptr)
+    {
+        path.push_back(indirect);
+
+        Comparison result = compFunction(value, (*indirect)->__value);
+        if (result == Comparison::less)
+            indirect = &((*indirect)->__left);
+        else if (result == Comparison::greater)
+            indirect = &((*indirect)->__right);
+        else // if (result == Comparison::equal)
+            break;
+    }
+
+    if (*indirect == nullptr) // the value does not exist in tree
+        throw NoSuchElementException();
+
+    else
+        path.push_back(indirect);
+
+    std::size_t index = path.size();
+
+    /*
+    Deletion of the Node:
+    After finding the node, it checks the number of children the node has and proceeds accordingly:
+
+    If the node has no children (it is a leaf), it simply deletes the node and sets the pointer to it (*indirect) to nullptr.
+    If the node has only a left child, it replaces the node with its left child and then deletes the node.
+    If the node has a right child, it finds the node's in-order successor (the node with the smallest value that is larger than the node's value,
+    which is the left-most node in its right sub-tree). It then replaces the node with its in-order successor and deletes the node.
+    */
+    if ((*indirect)->__left == nullptr and (*indirect)->__right == nullptr)
+    {                     // the node is leaf
+        delete *indirect; // just delete node
+        *indirect = nullptr;
+        path.pop_back(); // pop the deleted node from path
+    }
+
+    else if ((*indirect)->__right == nullptr)
+    { // only left child exists
+        AVLTreeNode *toRemove = *indirect;
+
+        (*indirect) = (*indirect)->__left;
+        delete toRemove;
+
+        // path.pop_back();
+    }
+
+    else
+    { // right child exists
+        AVLTreeNode **successor = &((*indirect)->__right);
+
+        while ((*successor)->__left != nullptr)
+        {
+            path.push_back(successor);
+            successor = &((*successor)->__left);
+        }
+
+        if (*successor == (*indirect)->__right)
+        {
+            (*successor)->__left = (*indirect)->__left;
+
+            AVLTreeNode *toRemove = *indirect;
+            *indirect = *successor;
+            delete toRemove;
+        }
+
+        else
+        {
+            AVLTreeNode *tmp = *path.back(), *suc = *successor;
+
+            tmp->__right = suc->__right;
+            suc->__left = (*indirect)->__left;
+            suc->__right = (*indirect)->__right;
+
+            delete *indirect;
+            *indirect = suc;
+            path[index] = &(suc->__right);
+        }
+    }
+
+    balance(path);
+    __size--;
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::balance(Stack<AVLTreeNode **> &path)
+{
+    AVLTreeNode **indirect;
+    while (!path.isEmpty())
+    {
+        indirect = path.back();
+        path.pop_back();
+        if (*indirect == nullptr)
+        {
+            continue;
+        }
+
+        (*indirect)->updateValues();
+
+        if ((*indirect)->balanceFactor() >= 2 and (*indirect)->__left->balanceFactor() >= 0) // left - left
+            *indirect = (*indirect)->right_rotate();
+
+        else if ((*indirect)->balanceFactor() >= 2)
+        { // left - right
+            (*indirect)->__left = (*indirect)->__left->left_rotate();
+            *indirect = (*indirect)->right_rotate();
+        }
+
+        else if ((*indirect)->balanceFactor() <= -2 and (*indirect)->__right->balanceFactor() <= 0) // right - right
+            *indirect = (*indirect)->left_rotate();
+
+        else if ((*indirect)->balanceFactor() <= -2)
+        { // right - left
+            (*indirect)->__right = ((*indirect)->__right)->right_rotate();
+            *indirect = (*indirect)->left_rotate();
+        }
+    }
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+bool AVLTree<T, compFunction>::isEmpty() const
+{
+    return __size == 0;
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+int AVLTree<T, compFunction>::getSize() const
 {
     return __size;
 }
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-const DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::getMax() const
-{
-    if (__max_element_ptr == nullptr)
-    {
-        throw NoSuchElementException();
-    }
-    return __max_element_ptr->getData();
-}
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-const DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::getMin() const
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+T &AVLTree<T, compFunction>::find(T value)
 {
-    if (__min_element_ptr == nullptr)
+    AVLTreeNode *direct = __root;
+    while (direct != nullptr)
     {
-        throw NoSuchElementException();
-    }
-    return __min_element_ptr->getData();
-}
-
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-void AVLTree<DATA_TYPE, compFunction>::insert(const DATA_TYPE &data)
-{
-    if (!insert_aux(data)) // not added
-    {
-        throw ElementAlreadyExistsException();
-    }
-    __size++;
-    __min_element_ptr = __root.get();
-    while (__min_element_ptr->getLeftPointer())
-    {
-        __min_element_ptr = __min_element_ptr->getLeftPointer();
-    }
-    __max_element_ptr = __root.get();
-    while (__max_element_ptr->getRightPointer())
-    {
-        __max_element_ptr = __max_element_ptr->getRightPointer();
-    }
-}
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-void AVLTree<DATA_TYPE, compFunction>::remove(const DATA_TYPE &data)
-{
-    if (!remove_aux(data))
-    {
-        throw NoSuchElementException();
-    }
-    __size--;
-    if (!isEmpty())
-    {
-        __min_element_ptr = __root.get();
-        while (__min_element_ptr->getLeftPointer())
-        {
-            __min_element_ptr = __min_element_ptr->getLeftPointer();
-        }
-        __max_element_ptr = __root.get();
-        while (__max_element_ptr->getRightPointer())
-        {
-            __max_element_ptr = __max_element_ptr->getRightPointer();
-        }
-    }
-}
-
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-DATA_TYPE &AVLTree<DATA_TYPE, compFunction>::find(const DATA_TYPE &data)
-{
-    Node_pointer tempNodePtr = getRoot();
-    while (tempNodePtr != nullptr)
-    {
-        Comparison result = Comparison::equal;
-        result = compFunction(tempNodePtr->getData(), data);
+        Comparison result = compFunction(value, direct->__value);
         if (result == Comparison::equal)
         {
-            return tempNodePtr->getData();
-        }
-        else if (result == Comparison::greater)
-        {
-            tempNodePtr = tempNodePtr->getLeftPointer();
+            return direct->__value;
         }
         else if (result == Comparison::less)
         {
-            tempNodePtr = tempNodePtr->getRightPointer();
+            direct = direct->__left;
+        }
+        else if (result == Comparison::greater)
+        {
+            direct = direct->__right;
         }
     }
     throw NoSuchElementException();
 }
 
-#ifdef TESTING
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-void AVLTree<DATA_TYPE, compFunction>::print() const
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+const T &AVLTree<T, compFunction>::find(T value) const
 {
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << "AVLTree size: " << __size << std::endl;
-    printNode(__root.get(), 0);
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
+    AVLTreeNode *direct = __root;
+    while (direct != nullptr)
+    {
+        Comparison result = Comparison::equal;
+        result = compFunction(value, direct->__value);
+        if (result == Comparison::equal)
+        {
+            return direct->__value;
+        }
+        else if (result == Comparison::less)
+        {
+            direct = direct->__left;
+        }
+        else if (result == Comparison::greater)
+        {
+            direct = direct->__right;
+        }
+    }
+    throw NoSuchElementException();
 }
 
-template <typename DATA_TYPE, Comparison (*compFunction)(const DATA_TYPE &, const DATA_TYPE &)>
-void AVLTree<DATA_TYPE, compFunction>::printNode(const Node_pointer &node_ptr, int level) const
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+const T &AVLTree<T, compFunction>::getMin() const
 {
-    if (node_ptr == nullptr)
-    {
-        return;
-    }
+    AVLTreeNode *cur = __root;
 
-    printNode(node_ptr->getRightPointer(), level + 1);
+    while (cur->__left != nullptr)
+        cur = cur->__left;
 
-    // Print indentation based on level
-    for (int i = 0; i < level * 4; i++)
-    {
-        std::cout << " ";
-    }
-
-    std::cout << "+--" << node_ptr->getData() << std::endl;
-
-    printNode(node_ptr->getLeftPointer(), level + 1);
+    return cur->__value;
 }
 
-#endif // TESTING
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+const T &AVLTree<T, compFunction>::getMax() const
+{
+    AVLTreeNode *cur = __root;
+
+    while (cur->__right != nullptr)
+        cur = cur->__right;
+
+    return cur->__value;
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+const T &AVLTree<T, compFunction>::operator[](std::size_t idx) const
+{
+    AVLTreeNode *cur = __root;
+    int left = cur->__left != nullptr ? cur->__left->count : 0;
+
+    while (left != idx)
+    {
+        if (left < idx)
+        {
+            idx -= left + 1;
+
+            cur = cur->__right;
+            left = cur->__left != nullptr ? cur->__left->count : 0;
+        }
+
+        else
+        {
+            cur = cur->__left;
+            left = cur->__left != nullptr ? cur->__left->count : 0;
+        }
+    }
+
+    return cur->__value;
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::display()
+{
+    printf("\n");
+    if (__root != nullptr)
+        display(__root);
+    else
+        printf("Empty");
+    printf("\n");
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::display(AVLTreeNode *cur, int depth, int state)
+{ // state: 1 -> left, 2 -> right , 0 -> root
+    if (cur->__left)
+        display(cur->__left, depth + 1, 1);
+
+    for (int i = 0; i < depth; i++)
+        printf("     ");
+
+    if (state == 1) // left
+        printf("┌───");
+    else if (state == 2) // right
+        printf("└───");
+
+    std::cout << "[" << cur->__value << "]" << /*- (" << cur->count << ", " << cur->height << ")" << */ std::endl;
+
+    if (cur->__right)
+        display(cur->__right, depth + 1, 2);
+}
 
 #endif // _AVL_TREE_H_

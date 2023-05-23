@@ -37,22 +37,6 @@ private:
     bool __vipOnly;
 };
 
-namespace our {
-    class storeID
-    {
-    private:
-        int *__movieIDs; 
-        int __index;
-    public:
-        storeID(int *movieIDs) : __movieIDs(movieIDs), __index(0) {}
-        void operator()(const std::shared_ptr<Movie>& movie)
-        {
-            __movieIDs[__index] = movie->getID();
-            __index++;
-        }
-    };
-};
-
 class GroupWatch;
 class User;
 

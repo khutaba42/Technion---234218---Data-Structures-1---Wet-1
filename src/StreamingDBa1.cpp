@@ -452,6 +452,10 @@ StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 	{
 		return StatusType::FAILURE;
 	}
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
+	{
+		return StatusType::FAILURE;
+	}
 
 	return StatusType::SUCCESS;
 }
