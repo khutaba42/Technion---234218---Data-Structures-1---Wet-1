@@ -144,12 +144,12 @@ public:
 
     void clear();
     bool isEmpty() const;
-    int size() const;
+    int getSize() const;
 
     T &find(T value);
     const T &find(T value) const;
-    const T &find_min() const;
-    const T &find_max() const;
+    const T &getMin() const;
+    const T &getMax() const;
     T &operator[](std::size_t idx);
     const T &operator[](std::size_t idx) const;
 
@@ -381,7 +381,7 @@ bool AVLTree<T, compFunction>::isEmpty() const
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
-int AVLTree<T, compFunction>::size() const
+int AVLTree<T, compFunction>::getSize() const
 {
     return __size;
 }
@@ -434,7 +434,7 @@ const T &AVLTree<T, compFunction>::find(T value) const
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
-const T &AVLTree<T, compFunction>::find_min() const
+const T &AVLTree<T, compFunction>::getMin() const
 {
     AVLTreeNode *cur = __root;
 
@@ -445,7 +445,7 @@ const T &AVLTree<T, compFunction>::find_min() const
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
-const T &AVLTree<T, compFunction>::find_max() const
+const T &AVLTree<T, compFunction>::getMax() const
 {
     AVLTreeNode *cur = __root;
 
