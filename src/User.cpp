@@ -1,6 +1,5 @@
 #include "../lib/Movie_User_GroupWatch.h"
 
-
 User::User(int id, bool vip)
     : __id(id), __vip(vip), __isInGroup(false), __group(nullptr)
 {
@@ -104,17 +103,28 @@ int User::getNumOfViews(Genre genre)
     if (__isInGroup)
     {
         viewsWithGroup = __group->getNumOfGroupMovies(genre);
-        viewsWithGroup -= __groupViewsWhenJoined[static_cast<unsigned long>(genre)];
+        if (genre == Genre::NONE)
+        {
+            for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
+            {
+                viewsWithGroup -= __groupViewsWhenJoined[i];
+            }
+        }
+        else{
+            viewsWithGroup -= __groupViewsWhenJoined[static_cast<unsigned long>(genre)];
+        }
+        
     }
     int res = 0;
-    if(genre == Genre::NONE)
+    if (genre == Genre::NONE)
     {
         for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
         {
-            res+=__soloViews[i];
+            res += __soloViews[i];
         }
     }
-    else {
+    else
+    {
         res += __soloViews[static_cast<unsigned long>(genre)];
     }
     return viewsWithGroup + res;
@@ -137,7 +147,7 @@ void User::watch(Genre genre)
     {
         __group->addNumOfCurrUsersViews(1, genre);
     }
-    
+
     // why do we need to update the group? he watched it alone ? __group->addViews(genre, 1);
 }
 

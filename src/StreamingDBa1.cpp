@@ -393,7 +393,7 @@ output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 	try
 	{
 		std::shared_ptr<User> user = __users_ordered_by_ID.find(std::shared_ptr<User>(new User(userId)));
-		return user->getNumOfViews(genre);
+		return output_t<int>(user->getNumOfViews(genre));
 	}
 	catch (...)
 	{

@@ -3,7 +3,7 @@
 GroupWatch::GroupWatch(int id)
     : __id(id), __numOfVipUsers(0), __numOfUsers(0)
 {
-    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         __usersSoloViews[i] = 0;
         __groupMoviesWatched[i] = 0;
@@ -35,7 +35,7 @@ void GroupWatch::addUser(std::shared_ptr<User> user)
 {
     user->getInGroup(this);
     __users.insert(user);
-    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         __usersSoloViews[i] += user->getNumOfViews(static_cast<Genre>(i));
     }
@@ -151,7 +151,6 @@ void GroupWatch::addNumOfCurrUsersViews(int amount, Genre genre)
         return;
     }
     __usersSoloViews[static_cast<unsigned long>(genre)] += amount;
-    __usersSoloViews[static_cast<unsigned long>(Genre::NONE)] += amount;
 }
 
 /**
@@ -171,7 +170,7 @@ int GroupWatch::getNumOfGroupMovies(Genre genre)
         }
     }
     else {
-        res += __groupMoviesWatched[static_cast<unsigned long>(genre)];
+        return __groupMoviesWatched[static_cast<unsigned long>(genre)];
     }
     return res;
 }
