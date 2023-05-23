@@ -342,7 +342,7 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 {
 	try
 	{
-		return __movies_ordered_by_ID.getSize();
+		return __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].getSize();
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -469,7 +469,7 @@ output_t<int> streaming_database::get_group_recommendation(int groupId)
 			return StatusType::FAILURE;
 
 		Genre favGenre = group->getFavGenre();
-		if (__movies_ordered_by_ID.isEmpty())
+		if (get_all_movies_count(favGenre).ans() == 0)
 			return StatusType::FAILURE;
 
 		return __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(favGenre)].getMax()->getID(); // this isn't true,  we need to return (in case of double equality) the movie with the lesser ID
