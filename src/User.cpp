@@ -2,23 +2,13 @@
 
 
 User::User(int id, bool vip)
-    : __id(id), __vip(vip), __group(nullptr)
+    : __id(id), __vip(vip), __isInGroup(false), __group(nullptr)
 {
-    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         __soloViews[i] = 0;
         __groupViewsWhenJoined[i] = 0;
     }
-}
-
-/**
- * @brief
- * Time_Complexity: O(1)
- * Space_Complexity: O(1)
- */
-bool User::isInGroup() const
-{
-    return (__group != nullptr);
 }
 
 /**
@@ -42,16 +32,21 @@ bool User::isVIP() const
  */
 void User::getInGroup(GroupWatch *group)
 {
-    if (isInGroup())
+    if (__isInGroup)
     {
         throw UserAlreadyInGroupException();
     }
     __group = group;
-
-    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    __isInGroup = true;
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
-        __groupViewsWhenJoined[i] = __group->getNumOfViews(static_cast<Genre>(i));
+        __groupViewsWhenJoined[i] = __group->getNumOfGroupMovies(static_cast<Genre>(i));
     }
+}
+
+int User::getNumOfViewsBeforeJoining(Genre genre) const
+{
+    return __groupViewsWhenJoined[static_cast<unsigned long>(genre)];
 }
 
 /**
@@ -62,16 +57,18 @@ void User::getInGroup(GroupWatch *group)
  */
 void User::removeUserFromGroup()
 {
-    if (!isInGroup())
+    if (!__isInGroup)
     {
         return;
     }
     for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         __group->addNumOfCurrUsersViews(-__soloViews[i], static_cast<Genre>(i));
+        __soloViews[i] += (__group->getNumOfGroupMovies(static_cast<Genre>(i)) - getNumOfViewsBeforeJoining(static_cast<Genre>(i)));
     }
-    __group->removeUser(std::shared_ptr<User>(this));
+    __group->removeUser(std::shared_ptr<User>(new User(*this)));
     __group = nullptr;
+    __isInGroup = false;
 }
 
 /**
@@ -82,16 +79,17 @@ void User::removeUserFromGroup()
  */
 void User::prepareUsersForEntireGroupDeletion()
 {
-    if (!isInGroup())
+    if (!__isInGroup)
     {
         return;
     }
-    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
         __groupViewsWhenJoined[i] = 0;
+        __soloViews[i] += (__group->getNumOfGroupMovies(static_cast<Genre>(i)) - getNumOfViewsBeforeJoining(static_cast<Genre>(i)));
     }
-    //__group->removeUser(std::shared_ptr<User>(this));
     __group = nullptr;
+    __isInGroup = false;
 }
 
 /**
@@ -103,12 +101,23 @@ void User::prepareUsersForEntireGroupDeletion()
 int User::getNumOfViews(Genre genre)
 {
     int viewsWithGroup = 0;
-    if (isInGroup())
+    if (__isInGroup)
     {
-        viewsWithGroup = __group->getNumOfViews(genre);
+        viewsWithGroup = __group->getNumOfGroupMovies(genre);
         viewsWithGroup -= __groupViewsWhenJoined[static_cast<unsigned long>(genre)];
     }
-    return viewsWithGroup + __soloViews[static_cast<unsigned long>(genre)];
+    int res = 0;
+    if(genre == Genre::NONE)
+    {
+        for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
+        {
+            res+=__soloViews[i];
+        }
+    }
+    else {
+        res += __soloViews[static_cast<unsigned long>(genre)];
+    }
+    return viewsWithGroup + res;
 }
 
 /**
@@ -124,8 +133,7 @@ void User::watch(Genre genre)
         return;
     }
     __soloViews[static_cast<unsigned long>(genre)]++;
-    __soloViews[static_cast<unsigned long>(Genre::NONE)]++;
-    if (isInGroup())
+    if (__isInGroup)
     {
         __group->addNumOfCurrUsersViews(1, genre);
     }

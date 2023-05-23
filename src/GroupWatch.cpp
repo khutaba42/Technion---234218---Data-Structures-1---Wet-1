@@ -1,28 +1,28 @@
 #include "../lib/Movie_User_GroupWatch.h"
 
-
 GroupWatch::GroupWatch(int id)
     : __id(id), __numOfVipUsers(0), __numOfUsers(0)
 {
     for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
     {
-        __numOfCurrUsersViews[i] = 0;
-        __groupViews[i] = 0;
+        __usersSoloViews[i] = 0;
+        __groupMoviesWatched[i] = 0;
+        __allViews[i] = 0;
     }
 }
+struct FunctionOpj
+{
+    void operator()(std::shared_ptr<User> &user)
+    {
+        user->prepareUsersForEntireGroupDeletion();
+    }
+};
 
-GroupWatch::~GroupWatch() {
-    __users.in_order_traversal(
-                [](std::shared_ptr<User>& user){
-            user->prepareUsersForEntireGroupDeletion();
-        }
-    );
-
-    /*.in_order_traversal(
-        [](std::shared_ptr<User>& user){
-            user->prepareUsersForEntireGroupDeletion();
-        }
-    );*/
+void GroupWatch::clearUsers()
+{
+    struct FunctionOpj remove;
+    __users.in_order_traversal(remove);
+    __numOfUsers = 0;
 }
 
 /**
@@ -33,16 +33,17 @@ GroupWatch::~GroupWatch() {
  */
 void GroupWatch::addUser(std::shared_ptr<User> user)
 {
-    user->getInGroup(this);/*
-    for (short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
-    {
-        addViews(static_cast<Genre>(i), user->getNumOfViews(static_cast<Genre>(i)));
-    }*/
+    user->getInGroup(this);
     __users.insert(user);
+    for (unsigned short i = 0; i <= static_cast<unsigned long>(Genre::NONE); i++)
+    {
+        __usersSoloViews[i] += user->getNumOfViews(static_cast<Genre>(i));
+    }
     if (user->isVIP())
     {
         __numOfVipUsers++;
     }
+    __numOfUsers++;
 }
 
 /**
@@ -80,6 +81,13 @@ void GroupWatch::removeUser(std::shared_ptr<User> user)
     {
         __numOfVipUsers--;
     }
+
+    for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
+    {
+        __usersSoloViews[i] -= user->getNumOfViews(static_cast<Genre>(i));
+        __allViews[i] -= (__groupMoviesWatched[i] - user->getNumOfViewsBeforeJoining(static_cast<Genre>(i)));
+    }
+    __numOfUsers--;
 }
 
 /**
@@ -105,24 +113,13 @@ Genre GroupWatch::getFavGenre() const
 
     for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
-        if (__numOfCurrUsersViews[i] > maxGenreViews)
+        if (__usersSoloViews[i] + __allViews[i] > maxGenreViews)
         {
-            maxGenreViews = __numOfCurrUsersViews[i];
+            maxGenreViews = __usersSoloViews[i] + __allViews[i];
             favGenre = i;
         }
     }
     return static_cast<Genre>(favGenre);
-}
-
-/**
- *
- * @brief
- * Time_Complexity: O(1)
- * Space_Complexity: O(1)
- */
-void GroupWatch::addViews(Genre genre, int amount)
-{
-    __allViews[static_cast<unsigned long>(genre)] += amount;
 }
 
 /**
@@ -137,19 +134,8 @@ void GroupWatch::watch(Genre genre)
     {
         return;
     }
-    __numOfCurrUsersViews[static_cast<unsigned long>(genre)] += getNumOfUsers();
-    __numOfCurrUsersViews[static_cast<unsigned long>(Genre::NONE)] += getNumOfUsers();
-
-
-
-
-
-/*
-
-    __groupViews[static_cast<unsigned long>(genre)]++;
-    __allViews[static_cast<unsigned long>(genre)]++;
-    __groupViews[static_cast<unsigned long>(Genre::NONE)]++;
-    */
+    __allViews[static_cast<unsigned long>(genre)] += getNumOfUsers();
+    __groupMoviesWatched[static_cast<unsigned long>(genre)]++;
 }
 
 /**
@@ -164,8 +150,8 @@ void GroupWatch::addNumOfCurrUsersViews(int amount, Genre genre)
     {
         return;
     }
-    __numOfCurrUsersViews[static_cast<unsigned long>(genre)] += amount;
-    __numOfCurrUsersViews[static_cast<unsigned long>(Genre::NONE)] += amount;
+    __usersSoloViews[static_cast<unsigned long>(genre)] += amount;
+    __usersSoloViews[static_cast<unsigned long>(Genre::NONE)] += amount;
 }
 
 /**
@@ -174,9 +160,20 @@ void GroupWatch::addNumOfCurrUsersViews(int amount, Genre genre)
  * Time_Complexity: O(1)
  * Space_Complexity: O(1)
  */
-int GroupWatch::getNumOfViews(Genre genre)
+int GroupWatch::getNumOfGroupMovies(Genre genre)
 {
-    return __groupViews[static_cast<unsigned long>(genre)];
+    int res = 0;
+    if(genre == Genre::NONE)
+    {
+        for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
+        {
+            res += __groupMoviesWatched[i];
+        }
+    }
+    else {
+        res += __groupMoviesWatched[static_cast<unsigned long>(genre)];
+    }
+    return res;
 }
 
 /**

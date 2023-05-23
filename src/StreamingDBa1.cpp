@@ -1,5 +1,5 @@
 #include "../lib/StreamingDBa1.h"
-
+#include <cassert>
 /**
  * @brief
  * @tparam
@@ -137,7 +137,7 @@ StatusType streaming_database::remove_user(int userId)
 		// look for the User object using his name
 		std::shared_ptr<User> temp(new User(userId));
 		// return the User object
-		std::shared_ptr<User> toDelete = __users_ordered_by_ID.find(temp);
+		std::shared_ptr<User> toDelete(__users_ordered_by_ID.find(temp));
 		// remove the user from the group he is in
 		toDelete->removeUserFromGroup();
 		// now we can delete the User object itself
@@ -167,8 +167,7 @@ StatusType streaming_database::add_group(int groupId)
 		return StatusType::INVALID_INPUT;
 	try
 	{
-		std::shared_ptr<GroupWatch> group(new GroupWatch(groupId));
-		__groups_ordered_by_ID.insert(group);
+		__groups_ordered_by_ID.insert(std::shared_ptr<GroupWatch>(new GroupWatch(groupId)));
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -195,7 +194,10 @@ StatusType streaming_database::remove_group(int groupId)
 	try
 	{
 		// first we need to go through all the groupUsers and remove them form the group
-		std::shared_ptr<GroupWatch> toDelete(new GroupWatch(groupId));
+		std::shared_ptr<GroupWatch> temp(new GroupWatch(groupId));
+		std::shared_ptr<GroupWatch> toDelete(__groups_ordered_by_ID.find(temp));
+		toDelete->clearUsers();
+		assert(toDelete->getNumOfUsers() == 0);
 		__groups_ordered_by_ID.remove(toDelete);
 	}
 	catch (const std::bad_alloc &e)
@@ -222,20 +224,18 @@ StatusType streaming_database::add_user_to_group(int userId, int groupId)
 		return StatusType::INVALID_INPUT;
 	try
 	{
-		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user(__users_ordered_by_ID.find(tempUser));
+		std::shared_ptr<User> user(__users_ordered_by_ID.find(std::shared_ptr<User>(new User(userId))));
+		std::shared_ptr<GroupWatch> group = __groups_ordered_by_ID.find(std::shared_ptr<GroupWatch>(new GroupWatch(groupId)));
 
-		std::shared_ptr<GroupWatch> tempGroup(new GroupWatch(groupId));
-		std::shared_ptr<GroupWatch> group = __groups_ordered_by_ID.find(tempGroup);
-
-		
+		int prevNom = group->getNumOfUsers();
 		group->addUser(user);
+		assert(group->getNumOfUsers() == prevNom + 1);
 	}
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (...)
+	catch (const std::exception& e)
 	{
 		return StatusType::FAILURE;
 	}
@@ -256,12 +256,9 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 
 	try
 	{
-	
-		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
 
-		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_ordered_by_ID.find(tempMovie);
+		std::shared_ptr<User> user = __users_ordered_by_ID.find(std::shared_ptr<User>(new User(userId)));
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID.find(std::shared_ptr<Movie>(new Movie(movieId)));
 
 		if (movie->isVIPOnly() && !user->isVIP())
 			return StatusType::FAILURE;
@@ -395,8 +392,7 @@ output_t<int> streaming_database::get_num_views(int userId, Genre genre)
 		return StatusType::INVALID_INPUT;
 	try
 	{
-		std::shared_ptr<User> tempUser(new User(userId));
-		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
+		std::shared_ptr<User> user = __users_ordered_by_ID.find(std::shared_ptr<User>(new User(userId)));
 		return user->getNumOfViews(genre);
 	}
 	catch (...)

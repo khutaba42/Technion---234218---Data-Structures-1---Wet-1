@@ -57,9 +57,9 @@ public:
     User(const User &) = default;
     User &operator=(const User &) = default;
 
-    bool isInGroup() const;
     bool isVIP() const;
     void getInGroup(GroupWatch *group);
+    int getNumOfViewsBeforeJoining(Genre genre) const;
     void removeUserFromGroup();
     int getNumOfViews(Genre genre);
     void prepareUsersForEntireGroupDeletion();
@@ -71,8 +71,9 @@ public:
 private:
     int __id;
     bool __vip;
-    int __soloViews[static_cast<unsigned long>(Genre::NONE) + 1];
-    int __groupViewsWhenJoined[static_cast<unsigned long>(Genre::NONE) + 1];
+    bool __isInGroup;
+    int __soloViews[static_cast<unsigned long>(Genre::NONE)];
+    int __groupViewsWhenJoined[static_cast<unsigned long>(Genre::NONE)];
     GroupWatch *__group;
 };
 
@@ -80,10 +81,10 @@ class GroupWatch
 {
 public:
     GroupWatch(int id);
-    ~GroupWatch();
+    ~GroupWatch() = default;
     GroupWatch(const GroupWatch &) = default;
     GroupWatch &operator=(const GroupWatch &) = default;
-
+    void clearUsers();
     void addUser(std::shared_ptr<User> user);
     bool isVIP() const;
     bool isEmpty();
@@ -95,7 +96,7 @@ public:
 
     void addNumOfCurrUsersViews(int amount, Genre genre);
 
-    int getNumOfViews(Genre genre);
+    int getNumOfGroupMovies(Genre genre);
     bool operator==(const GroupWatch &other) const;
     bool operator>(const GroupWatch &other) const;
     bool operator<(const GroupWatch &other) const;
@@ -105,10 +106,8 @@ private:
     int __numOfVipUsers;
     int __numOfUsers;
     // to determine in O(1) whats the most loved Genre, beware that this should change everytime that a group user waches something in or out of the group
-    int __numOfCurrUsersViews[static_cast<unsigned long>(Genre::NONE) + 1];
-
-
-    int __groupViews[static_cast<unsigned long>(Genre::NONE) + 1];
+    int __usersSoloViews[static_cast<unsigned long>(Genre::NONE)];
+    int __groupMoviesWatched[static_cast<unsigned long>(Genre::NONE)];
     int __allViews[static_cast<unsigned long>(Genre::NONE)];
 
     
