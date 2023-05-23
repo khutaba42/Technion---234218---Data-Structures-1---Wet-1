@@ -14,8 +14,8 @@ public:
     Movie(int id);
 
     ~Movie() = default;
-    Movie(const Movie &) = delete;
-    Movie &operator=(const Movie &) = delete;
+    Movie(const Movie &) = default;
+    Movie &operator=(const Movie &) = default;
 
     void rate(int rating);
     int getRating() const;
@@ -54,8 +54,8 @@ public:
 
     User(int id, bool vip = false);
     ~User() = default;
-    User(const User &) = delete;
-    User &operator=(const User &) = delete;
+    User(const User &) = default;
+    User &operator=(const User &) = default;
 
     bool isInGroup() const;
     bool isVIP() const;
@@ -81,8 +81,8 @@ class GroupWatch
 public:
     GroupWatch(int id);
     ~GroupWatch();
-    GroupWatch(const GroupWatch &) = delete;
-    GroupWatch &operator=(const GroupWatch &) = delete;
+    GroupWatch(const GroupWatch &) = default;
+    GroupWatch &operator=(const GroupWatch &) = default;
 
     void addUser(std::shared_ptr<User> user);
     bool isVIP() const;

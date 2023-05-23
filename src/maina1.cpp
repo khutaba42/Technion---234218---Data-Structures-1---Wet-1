@@ -49,7 +49,7 @@ int main()
             print(op, obj->add_movie(d1, (Genre) g1, d2, b));
         } else if (!op.compare("remove_movie")) {
             cin >> d1;
-            print(op, obj->remove_movie(d1));
+                print(op, obj->remove_movie(d1));
         } else if (!op.compare("add_user")) {
             cin >> d1 >> b1;
             if (!b1.compare("True")) {

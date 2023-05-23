@@ -41,17 +41,15 @@ StatusType streaming_database::add_movie(int movieId, Genre genre, int views, bo
 		return StatusType::INVALID_INPUT;
 	try
 	{
-		std::shared_ptr<Movie> movie(new Movie(movieId, genre, views, vipOnly));
-		__movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
-		__movies_ordered_by_ID[static_cast<unsigned long>(genre)].insert(movie);
-		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
-		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].insert(movie);
+		__movies_ordered_by_ID.insert(std::shared_ptr<Movie>(new Movie(movieId, genre, views, vipOnly)));
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(std::shared_ptr<Movie>(new Movie(movieId, genre, views, vipOnly)));
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(genre)].insert(std::shared_ptr<Movie>(new Movie(movieId, genre, views, vipOnly)));
 	}
 	catch (std::bad_alloc &)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::ElementAlreadyExistsException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -72,9 +70,9 @@ StatusType streaming_database::remove_movie(int movieId)
 	try
 	{
 		std::shared_ptr<Movie> temp(new Movie(movieId));
-		std::shared_ptr<Movie> toDelete = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(temp);
-		__movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);
-		__movies_ordered_by_ID[static_cast<unsigned long>(toDelete->getGenre())].remove(toDelete);
+
+		std::shared_ptr<Movie> toDelete = __movies_ordered_by_ID.find(temp);
+		__movies_ordered_by_ID.remove(toDelete);
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(toDelete);
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(toDelete->getGenre())].remove(toDelete);
 	}
@@ -83,7 +81,11 @@ StatusType streaming_database::remove_movie(int movieId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}*/
-	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException&)
+	{
+		return StatusType::FAILURE;
+	}
+	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_rating_views_reversedID>::NoSuchElementException&)
 	{
 		return StatusType::FAILURE;
 	}
@@ -111,7 +113,7 @@ StatusType streaming_database::add_user(int userId, bool isVip)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::ElementAlreadyExistsException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -145,7 +147,7 @@ StatusType streaming_database::remove_user(int userId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -172,7 +174,7 @@ StatusType streaming_database::add_group(int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::ElementAlreadyExistsException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -200,7 +202,7 @@ StatusType streaming_database::remove_group(int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -233,16 +235,7 @@ StatusType streaming_database::add_user_to_group(int userId, int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &e)
-	{
-		e.what();
-		return StatusType::FAILURE;
-	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
-	{
-		return StatusType::FAILURE;
-	}
-	catch (const User::UserAlreadyInGroupException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -263,11 +256,12 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 
 	try
 	{
+	
 		std::shared_ptr<User> tempUser(new User(userId));
 		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
 
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(tempMovie);
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID.find(tempMovie);
 
 		if (movie->isVIPOnly() && !user->isVIP())
 			return StatusType::FAILURE;
@@ -275,18 +269,16 @@ StatusType streaming_database::user_watch(int userId, int movieId)
 		user->watch(movie->getGenre());
 
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].remove(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(movie);
 		movie->add_views(1);
-		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(std::shared_ptr<Movie>(new Movie(*movie)));
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
 	}
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
-	{
-		return StatusType::FAILURE;
-	}
-	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -314,7 +306,7 @@ StatusType streaming_database::group_watch(int groupId, int movieId)
 			return StatusType::FAILURE;
 
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(tempMovie);
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID.find(tempMovie);
 
 		if (movie->isVIPOnly() && !group->isVIP())
 			return StatusType::FAILURE;
@@ -322,18 +314,16 @@ StatusType streaming_database::group_watch(int groupId, int movieId)
 		group->watch(movie->getGenre());
 
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].remove(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(movie);
 		movie->add_views(group->getNumOfUsers());
-		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(std::shared_ptr<Movie>(new Movie(*movie)));
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
 	}
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
-	{
-		return StatusType::FAILURE;
-	}
-	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -352,7 +342,7 @@ output_t<int> streaming_database::get_all_movies_count(Genre genre)
 {
 	try
 	{
-		return __movies_ordered_by_ID[static_cast<unsigned long>(genre)].getSize();
+		return __movies_ordered_by_ID.getSize();
 	}
 	catch (const std::bad_alloc &e)
 	{
@@ -433,26 +423,24 @@ StatusType streaming_database::rate_movie(int userId, int movieId, int rating)
 		std::shared_ptr<User> user = __users_ordered_by_ID.find(tempUser);
 
 		std::shared_ptr<Movie> tempMovie(new Movie(movieId));
-		std::shared_ptr<Movie> movie = __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE)].find(tempMovie);
+		std::shared_ptr<Movie> movie = __movies_ordered_by_ID.find(tempMovie);
 
 		if (movie->isVIPOnly() && !user->isVIP())
 			return StatusType::FAILURE;
 
 		// remember when using a shared pointer the Movie Object will NOT die here (even if we didn't use a NONE tree)
 		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].remove(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].remove(movie);
 		movie->rate(rating);
-		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(movie);
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(movie->getGenre())].insert(std::shared_ptr<Movie>(new Movie(*movie)));
+		__movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(Genre::NONE)].insert(movie);
 		// now the __movies_ordered_by_rating_views_reversedID is updated as it should
 	}
 	catch (const std::bad_alloc &e)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<User>, Compare_shared_ptr_to_users_by_ID>::NoSuchElementException &)
-	{
-		return StatusType::FAILURE;
-	}
-	catch (const AVLTree<std::shared_ptr<Movie>, Compare_shared_ptr_to_movies_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}
@@ -481,7 +469,7 @@ output_t<int> streaming_database::get_group_recommendation(int groupId)
 			return StatusType::FAILURE;
 
 		Genre favGenre = group->getFavGenre();
-		if (__movies_ordered_by_ID[static_cast<unsigned long>(favGenre)].isEmpty())
+		if (__movies_ordered_by_ID.isEmpty())
 			return StatusType::FAILURE;
 
 		return __movies_ordered_by_rating_views_reversedID[static_cast<unsigned long>(favGenre)].getMax()->getID(); // this isn't true,  we need to return (in case of double equality) the movie with the lesser ID
@@ -490,7 +478,7 @@ output_t<int> streaming_database::get_group_recommendation(int groupId)
 	{
 		return StatusType::ALLOCATION_ERROR;
 	}
-	catch (const AVLTree<std::shared_ptr<GroupWatch>, Compare_shared_ptr_to_groups_by_ID>::NoSuchElementException &)
+	catch (...)
 	{
 		return StatusType::FAILURE;
 	}

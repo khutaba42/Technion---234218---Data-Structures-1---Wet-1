@@ -5,6 +5,13 @@
 #include <iostream>
 #include "stack.h"
 #include <exception>
+#include <cassert>
+
+
+
+#include <unordered_set>
+
+
 
 // for comparing
 enum class Comparison
@@ -124,6 +131,26 @@ class AVLTree
         return true;
     }
 
+bool hasCycle(AVLTreeNode* node, std::unordered_set<AVLTreeNode*> visited, AVLTreeNode* parent) {
+    if (node == nullptr) {
+        return false;
+    }
+
+    visited.insert(node);
+
+    for (auto* child : {node->__left, node->__right}) {
+        if (visited.count(child) && child != parent) {
+            // Cycle detected
+            return true;
+        }
+        if (hasCycle(child, visited, node)) {
+            // Cycle detected in child subtree
+            return true;
+        }
+    }
+
+    return false;
+}
 public:
     class NoSuchElementException : public std::exception
     {
@@ -143,6 +170,7 @@ public:
     void remove(T value);
 
     void clear();
+    void clear_aux(AVLTreeNode* node);
     bool isEmpty() const;
     int getSize() const;
 
@@ -165,6 +193,13 @@ public:
         reverse_in_order_traversal_aux_recursive(__root, do_something);
     }
 
+
+bool hasCycleInTree() {
+    std::unordered_set<AVLTreeNode*> visited;
+    return hasCycle(__root, visited, nullptr);
+}
+
+
     void display();
     void display_aux(AVLTreeNode *root);
 };
@@ -179,39 +214,39 @@ AVLTree<T, compFunction>::AVLTree()
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 AVLTree<T, compFunction>::~AVLTree()
 {
+    //assert(hasCycleInTree() == false);
     clear();
+    //assert(hasCycleInTree() == false);
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 void AVLTree<T, compFunction>::clear()
 {
-    Stack<AVLTreeNode *> stack;
+    clear_aux(__root);
+    __root = nullptr;
+    __size = 0;
+}
 
-    if (__root != nullptr)
-        stack.push_back(__root);
 
-    while (!stack.isEmpty())
-    {
-        AVLTreeNode *node = stack.back();
-        stack.pop_back();
-
-        if (node->__left != nullptr)
-            stack.push_back(node->__left);
-
-        if (node->__right != nullptr)
-            stack.push_back(node->__right);
-
-        __size--;
-        delete node;
-        node = nullptr; // Set the pointer to nullptr after deletion
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::clear_aux(AVLTreeNode* node)
+{
+    if (node == nullptr) {
+        return;
     }
 
-    __root = nullptr;
+    // Recursively clear the left and right subtrees
+    clear_aux(node->__left);
+    clear_aux(node->__right);
+
+    // Delete the current node
+    delete node;
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 void AVLTree<T, compFunction>::insert(T value)
 {
+    //assert(hasCycleInTree() == false);
     AVLTreeNode **indirect = &__root;
     Stack<AVLTreeNode **> path;
 
@@ -233,11 +268,13 @@ void AVLTree<T, compFunction>::insert(T value)
 
     balance(path);
     __size++;
+    //assert(hasCycleInTree() == false);
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 void AVLTree<T, compFunction>::remove(T value)
 {
+    //assert(hasCycleInTree() == false);
     //display();
     AVLTreeNode **indirect = &__root; // to generalize insertion
     Stack<AVLTreeNode **> path;       // to update height values
@@ -288,7 +325,7 @@ void AVLTree<T, compFunction>::remove(T value)
 
         (*indirect) = (*indirect)->__left;
         delete toRemove;
-
+        toRemove = nullptr;
         path.pop_back();
     }
 
@@ -310,6 +347,8 @@ void AVLTree<T, compFunction>::remove(T value)
             AVLTreeNode *toRemove = *indirect;
             *indirect = *successor;
             delete toRemove;
+            toRemove = nullptr;
+            path.pop_back();
             //display();
         }
 
@@ -331,12 +370,14 @@ void AVLTree<T, compFunction>::remove(T value)
             AVLTreeNode *toDelete = *toDeletePtr;
             (*toDeletePtr) = toDelete->__right;
             delete toDelete;
+            toDelete = nullptr;
             path.pop_back();
 
         }
     }
     balance(path);
     __size--;
+    //assert(hasCycleInTree() == false);
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
@@ -377,7 +418,7 @@ void AVLTree<T, compFunction>::balance(Stack<AVLTreeNode **> &path)
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 bool AVLTree<T, compFunction>::isEmpty() const
 {
-    return __size == 0;
+    return __root == nullptr;
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>

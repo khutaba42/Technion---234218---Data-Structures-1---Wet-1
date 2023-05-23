@@ -29,7 +29,7 @@ private:
     */
     AVLTree<std::shared_ptr<Movie>,
             Compare_shared_ptr_to_movies_by_ID>
-        __movies_ordered_by_ID[static_cast<unsigned long>(Genre::NONE) + 1];
+        __movies_ordered_by_ID;
     /** 
      * @brief
      * these trees holds in a shared pointer to each Genre (without NONE) of all the movies and they are ordered by:
