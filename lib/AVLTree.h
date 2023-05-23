@@ -15,6 +15,14 @@ enum class Comparison
 };
 
 template <typename T>
+void ourSwap(T &left, T &right)
+{
+    T temp = left;
+    left = right;
+    right = temp;
+}
+
+template <typename T>
 inline Comparison AVLTree_CompareUsingOperators(const T &left, const T &right)
 {
     if (left < right)
@@ -51,8 +59,8 @@ class AVLTree
             __count = ((__left != nullptr) ? __left->__count : 0) + ((__right != nullptr) ? __right->__count : 0) + 1;
 
             __height = std::max(__left != nullptr ? __left->__height : 0,
-                              __right != nullptr ? __right->__height : 0) +
-                     1;
+                                __right != nullptr ? __right->__height : 0) +
+                       1;
         }
 
         int balanceFactor()
@@ -136,12 +144,12 @@ public:
 
     void clear();
     bool isEmpty() const;
-    int getSize() const;
+    int size() const;
 
     T &find(T value);
     const T &find(T value) const;
-    const T &getMin() const;
-    const T &getMax() const;
+    const T &find_min() const;
+    const T &find_max() const;
     T &operator[](std::size_t idx);
     const T &operator[](std::size_t idx) const;
 
@@ -158,6 +166,7 @@ public:
     }
 
     void display();
+    void display_aux(AVLTreeNode *root);
 };
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
@@ -229,6 +238,7 @@ void AVLTree<T, compFunction>::insert(T value)
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 void AVLTree<T, compFunction>::remove(T value)
 {
+    //display();
     AVLTreeNode **indirect = &__root; // to generalize insertion
     Stack<AVLTreeNode **> path;       // to update height values
 
@@ -254,10 +264,7 @@ void AVLTree<T, compFunction>::remove(T value)
     if (*indirect == nullptr) // the value does not exist in tree
         throw NoSuchElementException();
 
-    else
-        path.push_back(indirect);
-
-    std::size_t index = path.size();
+    int index = path.size() - 1;
 
     /*
     Deletion of the Node:
@@ -268,7 +275,7 @@ void AVLTree<T, compFunction>::remove(T value)
     If the node has a right child, it finds the node's in-order successor (the node with the smallest value that is larger than the node's value,
     which is the left-most node in its right sub-tree). It then replaces the node with its in-order successor and deletes the node.
     */
-    if ((*indirect)->__left == nullptr and (*indirect)->__right == nullptr)
+    if (((*indirect)->__left == nullptr) && ((*indirect)->__right == nullptr))
     {                     // the node is leaf
         delete *indirect; // just delete node
         *indirect = nullptr;
@@ -282,7 +289,7 @@ void AVLTree<T, compFunction>::remove(T value)
         (*indirect) = (*indirect)->__left;
         delete toRemove;
 
-        // path.pop_back();
+        path.pop_back();
     }
 
     else
@@ -294,6 +301,7 @@ void AVLTree<T, compFunction>::remove(T value)
             path.push_back(successor);
             successor = &((*successor)->__left);
         }
+        path.push_back(successor);
 
         if (*successor == (*indirect)->__right)
         {
@@ -302,22 +310,31 @@ void AVLTree<T, compFunction>::remove(T value)
             AVLTreeNode *toRemove = *indirect;
             *indirect = *successor;
             delete toRemove;
+            //display();
         }
 
         else
         {
-            AVLTreeNode *tmp = *path.back(), *suc = *successor;
+            AVLTreeNode **theOne = path[index];
+            AVLTreeNode **suc = path.back();
+            if ((suc != nullptr) && (theOne != nullptr) && ((*suc) != nullptr) && ((*theOne) != nullptr))
+            {
+                ourSwap((*suc)->__left, (*theOne)->__left);
+                ourSwap((*suc)->__right, (*theOne)->__right);
 
-            tmp->__right = suc->__right;
-            suc->__left = (*indirect)->__left;
-            suc->__right = (*indirect)->__right;
+                ourSwap(*theOne, *suc); // swap parents
+            }
 
-            delete *indirect;
-            *indirect = suc;
-            path[index] = &(suc->__right);
+            //display();
+
+            AVLTreeNode **toDeletePtr = path.back();
+            AVLTreeNode *toDelete = *toDeletePtr;
+            (*toDeletePtr) = toDelete->__right;
+            delete toDelete;
+            path.pop_back();
+
         }
     }
-
     balance(path);
     __size--;
 }
@@ -330,14 +347,14 @@ void AVLTree<T, compFunction>::balance(Stack<AVLTreeNode **> &path)
     {
         indirect = path.back();
         path.pop_back();
-        if (*indirect == nullptr)
+        if (indirect == nullptr || *indirect == nullptr)
         {
             continue;
         }
 
         (*indirect)->updateValues();
 
-        if ((*indirect)->balanceFactor() >= 2 and (*indirect)->__left->balanceFactor() >= 0) // left - left
+        if ((*indirect)->balanceFactor() >= 2 && (*indirect)->__left->balanceFactor() >= 0) // left - left
             *indirect = (*indirect)->right_rotate();
 
         else if ((*indirect)->balanceFactor() >= 2)
@@ -346,7 +363,7 @@ void AVLTree<T, compFunction>::balance(Stack<AVLTreeNode **> &path)
             *indirect = (*indirect)->right_rotate();
         }
 
-        else if ((*indirect)->balanceFactor() <= -2 and (*indirect)->__right->balanceFactor() <= 0) // right - right
+        else if ((*indirect)->balanceFactor() <= -2 && (*indirect)->__right->balanceFactor() <= 0) // right - right
             *indirect = (*indirect)->left_rotate();
 
         else if ((*indirect)->balanceFactor() <= -2)
@@ -364,7 +381,7 @@ bool AVLTree<T, compFunction>::isEmpty() const
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
-int AVLTree<T, compFunction>::getSize() const
+int AVLTree<T, compFunction>::size() const
 {
     return __size;
 }
@@ -417,7 +434,7 @@ const T &AVLTree<T, compFunction>::find(T value) const
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
-const T &AVLTree<T, compFunction>::getMin() const
+const T &AVLTree<T, compFunction>::find_min() const
 {
     AVLTreeNode *cur = __root;
 
@@ -428,7 +445,7 @@ const T &AVLTree<T, compFunction>::getMin() const
 }
 
 template <class T, Comparison (*compFunction)(const T &, const T &)>
-const T &AVLTree<T, compFunction>::getMax() const
+const T &AVLTree<T, compFunction>::find_max() const
 {
     AVLTreeNode *cur = __root;
 
@@ -467,9 +484,15 @@ const T &AVLTree<T, compFunction>::operator[](std::size_t idx) const
 template <class T, Comparison (*compFunction)(const T &, const T &)>
 void AVLTree<T, compFunction>::display()
 {
+    display_aux(__root);
+}
+
+template <class T, Comparison (*compFunction)(const T &, const T &)>
+void AVLTree<T, compFunction>::display_aux(AVLTreeNode *root)
+{
     printf("\n");
-    if (__root != nullptr)
-        display(__root);
+    if (root != nullptr)
+        display(root);
     else
         printf("Empty");
     printf("\n");
