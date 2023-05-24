@@ -84,7 +84,7 @@ void GroupWatch::removeUser(std::shared_ptr<User> user)
 
     for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
-        __usersSoloViews[i] -= user->getNumOfViews(static_cast<Genre>(i));
+        //__usersSoloViews[i] -= user->getNumOfViews(static_cast<Genre>(i));
         __allViews[i] -= (__groupMoviesWatched[i] - user->getNumOfViewsBeforeJoining(static_cast<Genre>(i)));
     }
     __numOfUsers--;
