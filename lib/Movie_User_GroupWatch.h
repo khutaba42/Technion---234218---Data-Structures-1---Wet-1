@@ -17,7 +17,7 @@ public:
     Movie(const Movie &) = default;
     Movie &operator=(const Movie &) = default;
 
-    void rate(int rating);
+    void rate(double rating);
     int getRating() const;
     int getViews() const;
     Genre getGenre() const;
@@ -30,7 +30,7 @@ public:
 
 private:
     int __id;
-    int __rating;
+    double __rating;
     int __numOfRaters;
     Genre __genre;
     int __numOfViews;
