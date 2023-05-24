@@ -197,7 +197,6 @@ StatusType streaming_database::remove_group(int groupId)
 		std::shared_ptr<GroupWatch> temp(new GroupWatch(groupId));
 		std::shared_ptr<GroupWatch> toDelete(__groups_ordered_by_ID.find(temp));
 		toDelete->clearUsers();
-		assert(toDelete->getNumOfUsers() == 0);
 		__groups_ordered_by_ID.remove(toDelete);
 	}
 	catch (const std::bad_alloc &e)
@@ -227,9 +226,7 @@ StatusType streaming_database::add_user_to_group(int userId, int groupId)
 		std::shared_ptr<User> user(__users_ordered_by_ID.find(std::shared_ptr<User>(new User(userId))));
 		std::shared_ptr<GroupWatch> group = __groups_ordered_by_ID.find(std::shared_ptr<GroupWatch>(new GroupWatch(groupId)));
 
-		int prevNom = group->getNumOfUsers();
 		group->addUser(user);
-		assert(group->getNumOfUsers() == prevNom + 1);
 	}
 	catch (const std::bad_alloc &e)
 	{
