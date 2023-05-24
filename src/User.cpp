@@ -84,8 +84,8 @@ void User::prepareUsersForEntireGroupDeletion()
     }
     for (unsigned short i = 0; i < static_cast<unsigned long>(Genre::NONE); i++)
     {
-        __groupViewsWhenJoined[i] = 0;
         __soloViews[i] += (__group->getNumOfGroupMovies(static_cast<Genre>(i)) - getNumOfViewsBeforeJoining(static_cast<Genre>(i)));
+        __groupViewsWhenJoined[i] = 0;
     }
     __group = nullptr;
     __isInGroup = false;
