@@ -23,7 +23,7 @@ Movie::Movie(int id)
  * Time_Complexity: O(1)
  * Space_Complexity: O(1)
  */
-void Movie::rate(double rating) {
+void Movie::rate(int rating) {
     __rating = (__rating * __numOfRaters + rating);
     __rating /= ++__numOfRaters;
 }
@@ -33,7 +33,7 @@ void Movie::rate(double rating) {
  * Time_Complexity: O(1)
  * Space_Complexity: O(1)
  */
-int Movie::getRating() const {
+double Movie::getRating() const {
     return __rating;
 }
 

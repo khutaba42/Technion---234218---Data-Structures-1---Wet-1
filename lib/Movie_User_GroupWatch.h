@@ -17,8 +17,8 @@ public:
     Movie(const Movie &) = default;
     Movie &operator=(const Movie &) = default;
 
-    void rate(double rating);
-    int getRating() const;
+    void rate(int rating);
+    double getRating() const;
     int getViews() const;
     Genre getGenre() const;
     int getID() const;
